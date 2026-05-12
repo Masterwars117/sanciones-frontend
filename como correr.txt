@@ -1,0 +1,32 @@
+Proyecto con:
+
+- Frontend: Nuxt 4 / Vue
+- Backend: Django 5
+- Base de datos: Oracle XE en Docker
+
+## Estructura
+- `backend/`
+- `frontend/`
+
+## Requisitos
+- Python 3.10
+- Node.js
+- Docker Desktop
+
+## Backend
+```bash
+cd backend
+python -m venv venv
+venv\Scripts\activate
+pip install django==5.2 djangorestframework django-cors-headers oracledb pandas openpyxl
+python manage.py runserver
+
+
+
+cd frontend
+\frontend>npm run dev
+
+
+cd backend
+.\venv\Scripts\activate
+(venv) \backend>python manage.py runserver
