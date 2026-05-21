@@ -24,11 +24,11 @@
     </div>
 
     <div class="card">
-      <div class="toolbar">
+      <div class="search-row">
         <input
           v-model="busqueda"
           type="text"
-          class="input"
+          class="input search-input"
           placeholder="Buscar por nombre, RFC, dependencia o cargo"
           @keyup.enter="cargarRegistros"
         />
@@ -43,76 +43,41 @@
         {{ mensajeCarga }}
       </div>
 
-      <div class="meta">
-        Total: {{ registros.length }}
-      </div>
-
-      <div v-if="cargando" class="empty">
-        Cargando registros...
-      </div>
-
-      <div v-else-if="registros.length === 0" class="empty">
-        No hay registros federales capturados todavía.
-      </div>
-
-      <table v-else class="table">
-        <thead>
-          <tr>
-            <th>RFC</th>
-            <th>Homoclave</th>
-            <th>Nombre</th>
-            <th>Dependencia</th>
-            <th>Autoridad sancionadora</th>
-            <th>Cargo</th>
-            <th>Periodo</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in registros" :key="`${item.rfc}-${item.homoclave}`">
-            <td>{{ item.rfc || "-" }}</td>
-            <td>{{ item.homoclave || "-" }}</td>
-            <td>{{ nombreCompleto(item) || "-" }}</td>
-            <td>{{ item.dependencia || "-" }}</td>
-            <td>{{ item.autsanc || "-" }}</td>
-            <td>{{ item.cargo || "-" }}</td>
-            <td>{{ item.periodo || "-" }}</td>
-            <td>
-              <NuxtLink
-                class="mini link-mini"
-                :to="`/admin/federal/ver?rfc=${encodeURIComponent(item.rfc)}`"
-              >
-                Ver
-              </NuxtLink>
-
-              <NuxtLink
-                class="mini link-mini"
-                :to="`/admin/federal/editar?rfc=${encodeURIComponent(item.rfc)}`"
-              >
-                Editar
-              </NuxtLink>
-
-              <button class="mini danger" @click="eliminar(item.rfc)">
-                Eliminar
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
       <div v-if="error" class="error-box">
         {{ error }}
       </div>
+
+      <TablaPaginada
+  :rows="registros"
+  :columns="columnas"
+  :row-key="getItemKey"
+  :get-display-name="nombreCompleto"
+  :get-sort-date="obtenerFechaOrden"
+  :loading="cargando"
+  loading-text="Cargando registros..."
+  empty-text="No hay registros federales capturados todavía."
+  :items-per-page-options="[10, 25, 50, 100]"
+  :default-items-per-page="50"
+  default-sort="reciente"
+  storage-key="federal"
+  @view-selected="verSeleccionado"
+  @edit-selected="editarSeleccionado"
+  @delete-selected="eliminarSeleccionados"
+/>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, watch, onMounted, onBeforeUnmount } from "vue"
+import { useRouter } from "vue-router"
+import Swal from "sweetalert2"
 
 definePageMeta({
   layout: "admin"
 })
+
+const router = useRouter()
 
 const busqueda = ref("")
 const registros = ref([])
@@ -121,13 +86,89 @@ const subiendo = ref(false)
 const error = ref("")
 const mensajeCarga = ref("")
 
-function nombreCompleto(item) {
-  return [item.nombres, item.apaterno, item.amaterno].filter(Boolean).join(" ")
+let debounceTimer = null
+
+function limpiarDebounce() {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
+  }
 }
 
-async function cargarRegistros() {
-  cargando.value = true
+function limpiarMensajes() {
   error.value = ""
+  mensajeCarga.value = ""
+}
+
+function mostrarError(texto) {
+  Swal.fire({
+    icon: "error",
+    title: "Error",
+    text: texto,
+    confirmButtonColor: "#8e1738"
+  })
+}
+
+function mostrarExito(texto) {
+  Swal.fire({
+    icon: "success",
+    title: "Correcto",
+    text: texto,
+    confirmButtonColor: "#8e1738"
+  })
+}
+
+function getItemKey(item) {
+  return item.rfc || ""
+}
+
+function nombreCompleto(item) {
+  return [item.nombres, item.apaterno, item.amaterno]
+    .filter(Boolean)
+    .join(" ")
+    .trim()
+}
+
+function obtenerFechaOrden(item) {
+  return item?.fechares || null
+}
+
+function formatearFecha(value) {
+  if (!value) return "-"
+  const fecha = new Date(value)
+  if (Number.isNaN(fecha.getTime())) return value
+
+  const dia = String(fecha.getDate()).padStart(2, "0")
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0")
+  const anio = fecha.getFullYear()
+  return `${dia}/${mes}/${anio}`
+}
+
+const columnas = [
+  { key: "rfc", label: "RFC", class: "col-md" },
+  { key: "homoclave", label: "Homoclave", class: "col-sm" },
+  {
+    key: "nombre",
+    label: "Nombre",
+    class: "col-lg",
+    format: (row) => nombreCompleto(row) || "-"
+  },
+  { key: "dependencia", label: "Dependencia", class: "col-lg" },
+  { key: "autsanc", label: "Autoridad sancionadora", class: "col-lg" },
+  { key: "cargo", label: "Cargo", class: "col-lg" },
+  { key: "periodo", label: "Periodo", class: "col-md" },
+  {
+    key: "fechares",
+    label: "Fecha resolución",
+    class: "col-md",
+    format: (row) => formatearFecha(row.fechares)
+  }
+]
+
+async function cargarRegistros() {
+  limpiarDebounce()
+  error.value = ""
+  cargando.value = true
 
   try {
     const res = await $fetch("/api/sancionados", {
@@ -141,8 +182,79 @@ async function cargarRegistros() {
   } catch (e) {
     error.value = "No se pudieron cargar los registros federales."
     registros.value = []
+    mostrarError("No se pudieron cargar los registros federales.")
   } finally {
     cargando.value = false
+  }
+}
+
+watch(busqueda, (nuevoValor, valorAnterior) => {
+  const nuevo = nuevoValor.trim()
+  const anterior = (valorAnterior || "").trim()
+
+  if (nuevo === anterior) return
+
+  limpiarDebounce()
+
+  debounceTimer = setTimeout(async () => {
+    await cargarRegistros()
+  }, 350)
+})
+
+function verSeleccionado(item) {
+  if (!item) return
+  router.push(`/admin/federal/ver?rfc=${encodeURIComponent(item.rfc)}`)
+}
+
+function editarSeleccionado(item) {
+  if (!item) return
+  router.push(`/admin/federal/editar?rfc=${encodeURIComponent(item.rfc)}`)
+}
+
+async function eliminarSeleccionados(items) {
+  limpiarMensajes()
+
+  if (!items?.length) return
+
+  const texto =
+    items.length === 1
+      ? "¿Eliminar el registro seleccionado?"
+      : `¿Eliminar los ${items.length} registros seleccionados?`
+
+  const resultado = await Swal.fire({
+    title: "Confirmar eliminación",
+    text: texto,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#b00020",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar"
+  })
+
+  if (!resultado.isConfirmed) return
+
+  try {
+    for (const item of items) {
+      await $fetch("/api/federal/eliminar", {
+        method: "POST",
+        body: { rfc: item.rfc }
+      })
+    }
+
+    await cargarRegistros()
+
+    const textoExito =
+      items.length === 1
+        ? "Registro eliminado correctamente."
+        : "Registros eliminados correctamente."
+
+    mensajeCarga.value = textoExito
+    mostrarExito(textoExito)
+  } catch (e) {
+    const textoError = e?.data?.error || "No se pudo eliminar uno o más registros."
+    error.value = textoError
+    mostrarError(textoError)
   }
 }
 
@@ -170,38 +282,27 @@ async function subirExcel(event) {
       throw new Error(data.error || "No se pudo cargar el Excel.")
     }
 
-    mensajeCarga.value = `Carga completada. Insertados: ${data.insertados || 0}. Duplicados: ${data.duplicados || 0}. Omitidos: ${data.omitidos || 0}.`
     await cargarRegistros()
+
+    const textoExito = `Carga completada. Insertados: ${data.insertados || 0}. Duplicados: ${data.duplicados || 0}. Omitidos: ${data.omitidos || 0}.`
+    mensajeCarga.value = textoExito
+    mostrarExito(textoExito)
   } catch (e) {
-    error.value = e.message || "No se pudo cargar el archivo Excel."
+    const textoError = e.message || "No se pudo cargar el archivo Excel."
+    error.value = textoError
+    mostrarError(textoError)
   } finally {
     subiendo.value = false
     event.target.value = ""
   }
 }
 
-async function eliminar(rfc) {
-  error.value = ""
-  mensajeCarga.value = ""
-
-  const confirmado = window.confirm(`¿Eliminar el registro con RFC ${rfc}?`)
-  if (!confirmado) return
-
-  try {
-    const res = await $fetch("/api/federal/eliminar", {
-      method: "POST",
-      body: { rfc }
-    })
-
-    mensajeCarga.value = res.message || "Registro eliminado correctamente."
-    await cargarRegistros()
-  } catch (e) {
-    error.value = e?.data?.error || "No se pudo eliminar el registro."
-  }
-}
-
 onMounted(async () => {
   await cargarRegistros()
+})
+
+onBeforeUnmount(() => {
+  limpiarDebounce()
 })
 </script>
 
@@ -218,6 +319,7 @@ onMounted(async () => {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .title {
@@ -237,23 +339,22 @@ onMounted(async () => {
   padding: 18px;
 }
 
-.toolbar {
+.search-row {
   display: flex;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
-.meta {
-  margin-bottom: 16px;
-  color: #666;
-  font-size: 14px;
+.search-input {
+  flex: 1;
+  min-width: 0;
 }
 
 .input {
-  flex: 1;
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 10px 12px;
+  background: white;
 }
 
 .btn-primary,
@@ -267,6 +368,7 @@ onMounted(async () => {
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
 }
 
 .btn-upload {
@@ -281,17 +383,10 @@ onMounted(async () => {
   border: none;
   background: #444;
   color: white;
-  padding: 10px 14px;
+  padding: 10px 16px;
   border-radius: 8px;
   cursor: pointer;
-}
-
-.empty {
-  padding: 42px 20px;
-  text-align: center;
-  color: #777;
-  border: 1px dashed #ccc;
-  border-radius: 8px;
+  white-space: nowrap;
 }
 
 .info-box {
@@ -299,50 +394,28 @@ onMounted(async () => {
   color: #444;
 }
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table th,
-.table td {
-  border: 1px solid #ddd;
-  padding: 10px;
-  text-align: left;
-  vertical-align: top;
-}
-
-.table th {
-  background: #f1f1f1;
-}
-
-.mini {
-  margin-right: 6px;
-  padding: 6px 10px;
-  border: 1px solid #bbb;
-  background: white;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-.link-mini {
-  text-decoration: none;
-  color: #333;
-  display: inline-block;
-}
-
-.danger {
-  color: #9b102d;
-  border-color: #d8a7b4;
-}
-
-.error-box {
-  margin-top: 14px;
-  color: #b00020;
-}
-
 .ok-box {
   margin-bottom: 12px;
   color: #0a7a2f;
+}
+
+.error-box {
+  margin-bottom: 12px;
+  color: #b00020;
+}
+
+@media (max-width: 980px) {
+  .head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .head-actions {
+    justify-content: flex-start;
+  }
+
+  .search-row {
+    flex-direction: column;
+  }
 }
 </style>

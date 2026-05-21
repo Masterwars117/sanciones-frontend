@@ -6,382 +6,517 @@
         <p class="subtitle">Tabla: INHABILITADOS</p>
       </div>
 
-      <NuxtLink to="/admin/estatal" class="btn-secondary">Volver</NuxtLink>
+      <NuxtLink to="/admin/estatal" class="btn-secondary">
+        Volver
+      </NuxtLink>
     </div>
 
     <div class="card">
-      <div v-if="cargandoCatalogos || cargandoDetalle" class="empty">
-        Cargando registro...
+      <div v-if="cargandoDetalle || cargandoCatalogos" class="empty">
+        {{ cargandoCatalogos ? "Cargando catálogos..." : "Cargando registro..." }}
       </div>
 
       <template v-else>
-        <div class="grid">
-          <div class="field">
-            <label>Año *</label>
-            <input v-model="form.anio" class="input" disabled />
-          </div>
-
-          <div class="field">
-            <label>Sanción ID *</label>
-            <input v-model="form.sancionid" class="input" disabled />
-          </div>
-
-          <div class="field wide">
-            <label>Entidad que sanciona</label>
-            <div class="radio-grid">
-              <button
-                v-for="item in catalogos.tipos_entidad_sancionadora"
-                :key="item.clave"
-                type="button"
-                class="radio-like"
-                :class="{ active: tipoEntidadSancionadora === String(item.clave) }"
-                @click="toggleTipoEntidad(String(item.clave))"
-              >
-                {{ item.descripcion }}
-              </button>
+        <div class="form-sections">
+          <section class="section-card">
+            <div class="section-head">
+              <h2 class="section-title">Identificación del registro</h2>
+              <p class="section-text">Datos base del registro estatal.</p>
             </div>
-          </div>
 
-          <div class="field wide">
-            <label>Dependencia / Institución</label>
-            <select v-model="form.dependencia" class="input" @change="alCambiarDependencia">
-              <option value="">Seleccione una opción</option>
+            <div class="grid">
+              <div class="field">
+                <label>Año *</label>
+                <input
+                  v-model="form.anio"
+                  class="input input-disabled"
+                  disabled
+                />
+              </div>
 
-              <option
-                v-if="opcionDependenciaActual"
-                :value="opcionDependenciaActual.clave"
-              >
-                {{ opcionDependenciaActual.clave }} - {{ opcionDependenciaActual.descripcion }}
-              </option>
+              <div class="field">
+                <label>Sanción ID *</label>
+                <input
+                  v-model="form.sancionid"
+                  class="input input-disabled"
+                  disabled
+                />
+              </div>
 
-              <option
-                v-for="item in dependenciasFiltradas"
-                :key="item.clave"
-                :value="item.clave"
-              >
-                {{ item.clave }} - {{ item.descripcion }}
-              </option>
-            </select>
-          </div>
+              <div class="field wide">
+                <label>Entidad que sanciona</label>
+                <div class="radio-grid">
+                  <button
+                    v-for="item in catalogos.tipos_entidad_sancionadora"
+                    :key="item.clave"
+                    type="button"
+                    class="radio-like"
+                    :class="{ active: tipoEntidadSancionadora === String(item.clave) }"
+                    @click="toggleTipoEntidad(String(item.clave))"
+                  >
+                    {{ item.descripcion }}
+                  </button>
+                </div>
+              </div>
 
-          <div class="field">
-            <label>Clave entidad labora</label>
-            <input v-model="form.cve_entidad_labora" class="input" readonly />
-          </div>
+              <div class="field wide">
+                <label>Dependencia / Institución</label>
+                <select v-model="form.dependencia" class="input" @change="alCambiarDependencia">
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in dependenciasFiltradas"
+                    :key="item.clave"
+                    :value="item.clave"
+                  >
+                    {{ item.clave }} - {{ item.descripcion }}
+                  </option>
+                </select>
+              </div>
 
-          <div class="field">
-            <label>Entidad labora</label>
-            <input v-model="form.entidad_labora" class="input" readonly />
-          </div>
+              <div class="field">
+                <label>Clave entidad labora</label>
+                <input
+                  v-model="form.cve_entidad_labora"
+                  class="input"
+                  readonly
+                  placeholder="Se completa automáticamente"
+                />
+              </div>
 
-          <div class="field">
-            <label>Oficio</label>
-            <input v-model.trim="form.oficio" class="input" />
-          </div>
+              <div class="field">
+                <label>Entidad labora</label>
+                <input
+                  v-model="form.entidad_labora"
+                  class="input"
+                  readonly
+                  placeholder="Se completa automáticamente"
+                />
+              </div>
 
-          <div class="field">
-            <label>Fecha oficio</label>
-            <input v-model="form.f_oficio" type="date" class="input" />
-          </div>
+              <div class="field">
+                <label>Expediente</label>
+                <input
+                  v-model.trim="form.expediente"
+                  class="input"
+                  placeholder="Ej. EXP-2025-001"
+                />
+              </div>
 
-          <div class="field">
-            <label>Expediente</label>
-            <input v-model.trim="form.expediente" class="input" />
-          </div>
+              <div class="field">
+                <label>ID SESEA</label>
+                <input
+                  v-model.trim="form.idsesea"
+                  class="input"
+                  placeholder="Identificador interno"
+                />
+              </div>
+            </div>
+          </section>
 
-          <div class="field">
-            <label>Fecha resolución</label>
-            <input v-model="form.f_resolucion" type="date" class="input" />
-          </div>
+          <section class="section-card">
+            <div class="section-head">
+              <h2 class="section-title">Datos de la persona</h2>
+              <p class="section-text">Información personal y laboral del sancionado.</p>
+            </div>
 
-          <div class="field">
-            <label>Apellido paterno</label>
-            <input v-model.trim="form.apaterno" class="input" />
-          </div>
+            <div class="grid">
+              <div class="field">
+                <label>Apellido paterno</label>
+                <input
+                  v-model.trim="form.apaterno"
+                  class="input"
+                  placeholder="Apellido paterno"
+                />
+              </div>
 
-          <div class="field">
-            <label>Apellido materno</label>
-            <input v-model.trim="form.amaterno" class="input" />
-          </div>
+              <div class="field">
+                <label>Apellido materno</label>
+                <input
+                  v-model.trim="form.amaterno"
+                  class="input"
+                  placeholder="Apellido materno"
+                />
+              </div>
 
-          <div class="field">
-            <label>Nombres</label>
-            <input v-model.trim="form.nombres" class="input" />
-          </div>
+              <div class="field wide">
+                <label>Nombres</label>
+                <input
+                  v-model.trim="form.nombres"
+                  class="input"
+                  placeholder="Nombre o nombres"
+                />
+              </div>
 
-          <div class="field">
-            <label>Cargo</label>
-            <input v-model.trim="form.cargo" class="input" />
-          </div>
+              <div class="field">
+                <label>RFC</label>
+                <input
+                  v-model.trim="form.rfc"
+                  class="input upper"
+                  maxlength="13"
+                  @input="form.rfc = normalizeRFCInput(form.rfc)"
+                  placeholder="RFC de 12 o 13 caracteres"
+                />
+              </div>
 
-          <div class="field">
-            <label>Tipo sanción 1</label>
-            <select v-model="form.tiposancion" class="input">
-              <option value="">Seleccione una opción</option>
-              <option
-                v-for="item in catalogos.tipos_sancion"
-                :key="item.clave"
-                :value="item.clave"
-              >
-                {{ item.clave }} - {{ item.descripcion }}
-              </option>
-            </select>
-          </div>
+              <div class="field">
+                <label>CURP</label>
+                <input
+                  v-model.trim="form.curp"
+                  class="input upper"
+                  maxlength="18"
+                  @input="form.curp = normalizeCURPInput(form.curp)"
+                  placeholder="CURP de 18 caracteres"
+                />
+              </div>
 
-          <div class="field">
-            <label>Tipo sanción 2</label>
-            <select v-model="form.tiposancion2" class="input">
-              <option value="">Seleccione una opción</option>
-              <option
-                v-for="item in catalogos.tipos_sancion"
-                :key="`ts2-${item.clave}`"
-                :value="item.clave"
-              >
-                {{ item.clave }} - {{ item.descripcion }}
-              </option>
-            </select>
-          </div>
+              <div class="field">
+                <label>Género</label>
+                <select v-model="form.genero" class="input">
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in catalogos.generos"
+                    :key="item.clave"
+                    :value="item.clave"
+                  >
+                    {{ item.clave }} - {{ item.descripcion }}
+                  </option>
+                </select>
+              </div>
 
-          <div class="field">
-            <label>Periodo</label>
-            <input v-model.trim="form.periodo" class="input" />
-          </div>
+              <div class="field">
+                <label>Cargo</label>
+                <input
+                  v-model.trim="form.cargo"
+                  class="input"
+                  placeholder="Cargo o puesto"
+                />
+              </div>
 
-          <div class="field">
-            <label>Fecha inicio inhabilitación</label>
-            <input v-model="form.deinhabil" type="date" class="input" />
-          </div>
+              <div class="field">
+                <label>Nivel categoría</label>
+                <input
+                  v-model.trim="form.nivelcateg"
+                  class="input"
+                  placeholder="Nivel o categoría"
+                />
+              </div>
+            </div>
+          </section>
 
-          <div class="field">
-            <label>Fecha término inhabilitación</label>
-            <input v-model="form.ainhabil" type="date" class="input" />
-          </div>
+          <section class="section-card">
+            <div class="section-head">
+              <h2 class="section-title">Resolución y sanción</h2>
+              <p class="section-text">Datos jurídicos y vigencia de la sanción.</p>
+            </div>
 
-          <div class="field wide">
-            <label>Motivo</label>
-            <textarea v-model.trim="form.motivo" class="input textarea"></textarea>
-          </div>
+            <div class="grid">
+              <div class="field">
+                <label>Oficio</label>
+                <input
+                  v-model.trim="form.oficio"
+                  class="input"
+                  placeholder="Número o referencia de oficio"
+                />
+              </div>
 
-          <div class="field">
-            <label>Estatus sanción 1</label>
-            <select v-model="form.statussanc1" class="input">
-              <option value="">Seleccione una opción</option>
-              <option
-                v-for="item in catalogos.estatus_sancion"
-                :key="`es1-${item.clave}`"
-                :value="item.clave"
-              >
-                {{ item.clave }} - {{ item.descripcion }}
-              </option>
-            </select>
-          </div>
+              <div class="field">
+                <label>Fecha oficio</label>
+                <input v-model="form.f_oficio" type="date" class="input" />
+              </div>
 
-          <div class="field">
-            <label>Estatus sanción 2</label>
-            <select v-model="form.statussanc2" class="input">
-              <option value="">Seleccione una opción</option>
-              <option
-                v-for="item in catalogos.estatus_sancion"
-                :key="`es2-${item.clave}`"
-                :value="item.clave"
-              >
-                {{ item.clave }} - {{ item.descripcion }}
-              </option>
-            </select>
-          </div>
+              <div class="field">
+                <label>Fecha resolución</label>
+                <input v-model="form.f_resolucion" type="date" class="input" />
+              </div>
 
-          <div class="field">
-            <label>RFC</label>
-            <input
-              v-model.trim="form.rfc"
-              class="input upper"
-              maxlength="13"
-              @input="form.rfc = normalizeRFCInput(form.rfc)"
-            />
-          </div>
+              <div class="field">
+                <label>Periodo</label>
+                <input
+                  v-model.trim="form.periodo"
+                  class="input"
+                  placeholder="Ej. 6 meses / 1 año"
+                />
+              </div>
 
-          <div class="field">
-            <label>Fecha ejecución 1</label>
-            <input v-model="form.fejec1" type="date" class="input" />
-          </div>
+              <div class="field">
+                <label>Tipo sanción 1</label>
+                <select v-model="form.tiposancion" class="input">
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in catalogos.tipos_sancion"
+                    :key="item.clave"
+                    :value="item.clave"
+                  >
+                    {{ item.clave }} - {{ item.descripcion }}
+                  </option>
+                </select>
+              </div>
 
-          <div class="field">
-            <label>Fecha ejecución 2</label>
-            <input v-model="form.fejec2" type="date" class="input" />
-          </div>
+              <div class="field">
+                <label>Tipo sanción 2</label>
+                <select v-model="form.tiposancion2" class="input">
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in catalogos.tipos_sancion"
+                    :key="`ts2-${item.clave}`"
+                    :value="item.clave"
+                  >
+                    {{ item.clave }} - {{ item.descripcion }}
+                  </option>
+                </select>
+              </div>
 
-          <div class="field">
-            <label>Monto 1</label>
-            <input v-model.trim="form.monto1" class="input" />
-          </div>
+              <div class="field">
+                <label>Estatus sanción 1</label>
+                <select v-model="form.statussanc1" class="input">
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in catalogos.estatus_sancion"
+                    :key="`es1-${item.clave}`"
+                    :value="item.clave"
+                  >
+                    {{ item.clave }} - {{ item.descripcion }}
+                  </option>
+                </select>
+              </div>
 
-          <div class="field">
-            <label>Monto 2</label>
-            <input v-model.trim="form.monto2" class="input" />
-          </div>
+              <div class="field">
+                <label>Estatus sanción 2</label>
+                <select v-model="form.statussanc2" class="input">
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in catalogos.estatus_sancion"
+                    :key="`es2-${item.clave}`"
+                    :value="item.clave"
+                  >
+                    {{ item.clave }} - {{ item.descripcion }}
+                  </option>
+                </select>
+              </div>
 
-          <div class="field">
-            <label>CURP</label>
-            <input
-              v-model.trim="form.curp"
-              class="input upper"
-              maxlength="18"
-              @input="form.curp = normalizeCURPInput(form.curp)"
-            />
-          </div>
+              <div class="field">
+                <label>Tipo falta</label>
+                <select v-model="form.tipofalta" class="input">
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in catalogos.tipos_falta"
+                    :key="item.clave"
+                    :value="item.clave"
+                  >
+                    {{ item.clave }} - {{ item.descripcion }}
+                  </option>
+                </select>
+              </div>
 
-          <div class="field">
-            <label>Fecha registro</label>
-            <input v-model="form.fechareg" type="date" class="input" />
-          </div>
+              <div class="field">
+                <label>Gravedad</label>
+                <select v-model="form.gravedad" class="input">
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in catalogos.niveles_gravedad"
+                    :key="item.clave"
+                    :value="item.clave"
+                  >
+                    {{ item.clave }} - {{ item.descripcion }}
+                  </option>
+                </select>
+              </div>
 
-          <div class="field">
-            <label>Género</label>
-            <select v-model="form.genero" class="input">
-              <option value="">Seleccione una opción</option>
-              <option
-                v-for="item in catalogos.generos"
-                :key="item.clave"
-                :value="item.clave"
-              >
-                {{ item.clave }} - {{ item.descripcion }}
-              </option>
-            </select>
-          </div>
+              <div class="field">
+                <label>Fecha inicio inhabilitación</label>
+                <input v-model="form.deinhabil" type="date" class="input" />
+              </div>
 
-          <div class="field">
-            <label>ID SESEA</label>
-            <input v-model.trim="form.idsesea" class="input" />
-          </div>
+              <div class="field">
+                <label>Fecha término inhabilitación</label>
+                <input v-model="form.ainhabil" type="date" class="input" />
+              </div>
 
-          <div class="field">
-            <label>Tipo falta</label>
-            <select v-model="form.tipofalta" class="input">
-              <option value="">Seleccione una opción</option>
-              <option
-                v-for="item in catalogos.tipos_falta"
-                :key="item.clave"
-                :value="item.clave"
-              >
-                {{ item.clave }} - {{ item.descripcion }}
-              </option>
-            </select>
-          </div>
+              <div class="field wide">
+                <label>Motivo</label>
+                <textarea
+                  v-model.trim="form.motivo"
+                  class="input textarea"
+                  placeholder="Descripción del motivo de la sanción"
+                ></textarea>
+              </div>
+            </div>
+          </section>
 
-          <div class="field">
-            <label>Nivel categoría</label>
-            <input v-model.trim="form.nivelcateg" class="input" />
-          </div>
+          <section class="section-card">
+            <div class="section-head">
+              <h2 class="section-title">Montos y ejecución</h2>
+              <p class="section-text">Fechas de ejecución y montos relacionados.</p>
+            </div>
 
-          <div class="field wide">
-            <label>Resolución URL</label>
-            <input v-model.trim="form.resolucionurl" class="input" />
-          </div>
+            <div class="grid">
+              <div class="field">
+                <label>Fecha ejecución 1</label>
+                <input v-model="form.fejec1" type="date" class="input" />
+              </div>
 
-          <div class="field wide">
-            <label>Observaciones</label>
-            <textarea v-model.trim="form.observaciones" class="input textarea"></textarea>
-          </div>
+              <div class="field">
+                <label>Fecha ejecución 2</label>
+                <input v-model="form.fejec2" type="date" class="input" />
+              </div>
 
-          <div class="field">
-            <label>Clave moneda 1</label>
-            <select v-model="form.cve_moneda1" class="input">
-              <option value="">Seleccione una opción</option>
-              <option
-                v-for="item in catalogos.monedas"
-                :key="`m1-${item.clave}`"
-                :value="item.clave"
-              >
-                {{ item.clave }} - {{ item.descripcion }}
-              </option>
-            </select>
-          </div>
+              <div class="field">
+                <label>Monto 1</label>
+                <input
+                  v-model.trim="form.monto1"
+                  class="input"
+                  placeholder="Monto textual o libre"
+                />
+              </div>
 
-          <div class="field">
-            <label>Clave moneda 2</label>
-            <select v-model="form.cve_moneda2" class="input">
-              <option value="">Seleccione una opción</option>
-              <option
-                v-for="item in catalogos.monedas"
-                :key="`m2-${item.clave}`"
-                :value="item.clave"
-              >
-                {{ item.clave }} - {{ item.descripcion }}
-              </option>
-            </select>
-          </div>
+              <div class="field">
+                <label>Monto 2</label>
+                <input
+                  v-model.trim="form.monto2"
+                  class="input"
+                  placeholder="Monto textual o libre"
+                />
+              </div>
 
-          <div class="field">
-            <label>Tipo documento</label>
-            <select v-model="form.tipo_docto" class="input">
-              <option value="">Seleccione una opción</option>
-              <option
-                v-for="item in catalogos.tipos_docto"
-                :key="item.clave"
-                :value="item.clave"
-              >
-                {{ item.descripcion }}
-              </option>
-            </select>
-          </div>
+              <div class="field">
+                <label>Monto API 1</label>
+                <input
+                  v-model.trim="form.montoapi1"
+                  type="number"
+                  step="any"
+                  class="input"
+                  placeholder="0.00"
+                />
+              </div>
 
-          <div class="field">
-            <label>Título documento</label>
-            <input v-model.trim="form.titulo_docto" class="input" />
-          </div>
+              <div class="field">
+                <label>Monto API 2</label>
+                <input
+                  v-model.trim="form.montoapi2"
+                  type="number"
+                  step="any"
+                  class="input"
+                  placeholder="0.00"
+                />
+              </div>
 
-          <div class="field">
-            <label>Descripción documento</label>
-            <input v-model.trim="form.descripcion_docto" class="input" />
-          </div>
+              <div class="field">
+                <label>Clave moneda 1</label>
+                <select v-model="form.cve_moneda1" class="input">
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in catalogos.monedas"
+                    :key="`m1-${item.clave}`"
+                    :value="item.clave"
+                  >
+                    {{ item.clave }} - {{ item.descripcion }}
+                  </option>
+                </select>
+              </div>
 
-          <div class="field">
-            <label>Fecha documento</label>
-            <input v-model="form.fecha_docto" type="date" class="input" />
-          </div>
+              <div class="field">
+                <label>Clave moneda 2</label>
+                <select v-model="form.cve_moneda2" class="input">
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in catalogos.monedas"
+                    :key="`m2-${item.clave}`"
+                    :value="item.clave"
+                  >
+                    {{ item.clave }} - {{ item.descripcion }}
+                  </option>
+                </select>
+              </div>
 
-          <div class="field">
-            <label>Particular</label>
-            <select v-model="form.particular" class="input">
-              <option value="">Seleccione una opción</option>
-              <option
-                v-for="item in catalogos.opciones_particular"
-                :key="item.clave"
-                :value="item.clave"
-              >
-                {{ item.clave }} - {{ item.descripcion }}
-              </option>
-            </select>
-          </div>
+              <div class="field">
+                <label>Fecha registro</label>
+                <input v-model="form.fechareg" type="date" class="input" />
+              </div>
 
-          <div class="field">
-            <label>Monto API 1</label>
-            <input v-model.trim="form.montoapi1" type="number" step="any" class="input" />
-          </div>
+              <div class="field">
+                <label>Particular</label>
+                <select v-model="form.particular" class="input">
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in catalogos.opciones_particular"
+                    :key="item.clave"
+                    :value="item.clave"
+                  >
+                    {{ item.clave }} - {{ item.descripcion }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </section>
 
-          <div class="field">
-            <label>Monto API 2</label>
-            <input v-model.trim="form.montoapi2" type="number" step="any" class="input" />
-          </div>
+          <section class="section-card">
+            <div class="section-head">
+              <h2 class="section-title">Documento y observaciones</h2>
+              <p class="section-text">Enlaces, referencia documental y notas finales.</p>
+            </div>
 
-          <div class="field">
-            <label>Gravedad</label>
-            <select v-model="form.gravedad" class="input">
-              <option value="">Seleccione una opción</option>
-              <option
-                v-for="item in catalogos.niveles_gravedad"
-                :key="item.clave"
-                :value="item.clave"
-              >
-                {{ item.clave }} - {{ item.descripcion }}
-              </option>
-            </select>
-          </div>
+            <div class="grid">
+              <div class="field">
+                <label>Tipo documento</label>
+                <select v-model="form.tipo_docto" class="input">
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in catalogos.tipos_docto"
+                    :key="item.clave"
+                    :value="item.clave"
+                  >
+                    {{ item.descripcion }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Fecha documento</label>
+                <input v-model="form.fecha_docto" type="date" class="input" />
+              </div>
+
+              <div class="field wide">
+                <label>Título documento</label>
+                <input
+                  v-model.trim="form.titulo_docto"
+                  class="input"
+                  placeholder="Título o nombre del documento"
+                />
+              </div>
+
+              <div class="field wide">
+                <label>Descripción documento</label>
+                <input
+                  v-model.trim="form.descripcion_docto"
+                  class="input"
+                  placeholder="Breve descripción documental"
+                />
+              </div>
+
+              <div class="field wide">
+                <label>Resolución URL</label>
+                <input
+                  v-model.trim="form.resolucionurl"
+                  class="input"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div class="field wide">
+                <label>Observaciones</label>
+                <textarea
+                  v-model.trim="form.observaciones"
+                  class="input textarea"
+                  placeholder="Notas u observaciones adicionales"
+                ></textarea>
+              </div>
+            </div>
+          </section>
         </div>
 
         <div class="actions">
           <button class="btn-primary" :disabled="guardando" @click="guardar">
-            {{ guardando ? "Guardando..." : "Actualizar" }}
+            {{ guardando ? "Actualizando..." : "Actualizar registro" }}
           </button>
         </div>
 
@@ -405,7 +540,7 @@ const router = useRouter()
 
 const guardando = ref(false)
 const cargandoDetalle = ref(false)
-const cargandoCatalogos = ref(false)
+const cargandoCatalogos = ref(true)
 const mensaje = ref("")
 const error = ref("")
 const anioOriginal = ref("")
@@ -517,18 +652,6 @@ const dependenciasFiltradas = computed(() => {
   return catalogos.dependencias_por_tipo?.[tipoEntidadSancionadora.value] || []
 })
 
-const opcionDependenciaActual = computed(() => {
-  if (!form.dependencia) return null
-
-  const existeEnLista = catalogos.dependencias.find((item) => item.clave === form.dependencia)
-  if (existeEnLista) return null
-
-  return {
-    clave: form.dependencia,
-    descripcion: form.entidad_labora || form.dependencia,
-  }
-})
-
 async function cargarCatalogos() {
   cargandoCatalogos.value = true
   error.value = ""
@@ -555,6 +678,43 @@ async function cargarCatalogos() {
   }
 }
 
+function toggleTipoEntidad(valor) {
+  if (tipoEntidadSancionadora.value === valor) {
+    tipoEntidadSancionadora.value = ""
+    form.dependencia = ""
+    form.cve_entidad_labora = ""
+    form.entidad_labora = ""
+    return
+  }
+
+  tipoEntidadSancionadora.value = valor
+  form.dependencia = ""
+  form.cve_entidad_labora = ""
+  form.entidad_labora = ""
+}
+
+function alCambiarDependencia() {
+  const dep = catalogos.dependencias.find((item) => item.clave === form.dependencia)
+  if (!dep) {
+    form.cve_entidad_labora = ""
+    form.entidad_labora = ""
+    return
+  }
+
+  form.cve_entidad_labora = dep.clave
+  form.entidad_labora = dep.descripcion
+  tipoEntidadSancionadora.value = String(dep.tipo)
+}
+
+function sincronizarDependenciaActual() {
+  const dep = catalogos.dependencias.find((item) => item.clave === form.dependencia)
+  if (!dep) return
+
+  form.cve_entidad_labora = dep.clave
+  form.entidad_labora = dep.descripcion
+  tipoEntidadSancionadora.value = String(dep.tipo)
+}
+
 async function cargarDetalle() {
   const anio = (route.query.anio || "").toString().trim()
   const sancionid = (route.query.sancionid || "").toString().trim()
@@ -573,57 +733,17 @@ async function cargarDetalle() {
     })
 
     const reg = res.registro || {}
+
     anioOriginal.value = reg.anio || ""
     sancionidOriginal.value = reg.sancionid || ""
-    Object.assign(form, reg)
 
-    sincronizarTipoEntidadDesdeRegistro()
+    Object.assign(form, reg)
+    sincronizarDependenciaActual()
   } catch (e) {
     error.value = e?.data?.error || "No se pudo cargar el registro."
   } finally {
     cargandoDetalle.value = false
   }
-}
-
-function toggleTipoEntidad(valor) {
-  if (tipoEntidadSancionadora.value === valor) {
-    tipoEntidadSancionadora.value = ""
-    form.dependencia = ""
-    form.cve_entidad_labora = ""
-    form.entidad_labora = ""
-    return
-  }
-
-  tipoEntidadSancionadora.value = valor
-  form.dependencia = ""
-  form.cve_entidad_labora = ""
-  form.entidad_labora = ""
-}
-
-function sincronizarTipoEntidadDesdeRegistro() {
-  const claveBuscada = form.dependencia || form.cve_entidad_labora
-  if (!claveBuscada) return
-
-  const dep = catalogos.dependencias.find((item) => item.clave === claveBuscada)
-  if (!dep) return
-
-  tipoEntidadSancionadora.value = String(dep.tipo)
-  form.dependencia = dep.clave
-  form.cve_entidad_labora = dep.clave
-  form.entidad_labora = dep.descripcion
-}
-
-function alCambiarDependencia() {
-  const dep = catalogos.dependencias.find((item) => item.clave === form.dependencia)
-  if (!dep) {
-    form.cve_entidad_labora = ""
-    form.entidad_labora = ""
-    return
-  }
-
-  form.cve_entidad_labora = dep.clave
-  form.entidad_labora = dep.descripcion
-  tipoEntidadSancionadora.value = String(dep.tipo)
 }
 
 async function guardar() {
@@ -684,8 +804,37 @@ onMounted(async () => {
 .card {
   background: white;
   border: 1px solid #ddd;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 18px;
+}
+
+.form-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.section-card {
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 18px;
+  background: #fcfcfc;
+}
+
+.section-head {
+  margin-bottom: 14px;
+}
+
+.section-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  color: #2f2f2f;
+}
+
+.section-text {
+  margin: 0;
+  color: #777;
+  font-size: 13px;
 }
 
 .grid {
@@ -712,9 +861,14 @@ onMounted(async () => {
 
 .input {
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 12px;
   background: white;
+}
+
+.input-disabled {
+  background: #f5f5f5;
+  color: #666;
 }
 
 .upper {
@@ -722,7 +876,7 @@ onMounted(async () => {
 }
 
 .textarea {
-  min-height: 90px;
+  min-height: 96px;
   resize: vertical;
 }
 
@@ -740,7 +894,7 @@ onMounted(async () => {
   border: 1px solid #cfcfcf;
   background: white;
   color: #333;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 12px;
   text-align: left;
   cursor: pointer;
@@ -761,6 +915,8 @@ onMounted(async () => {
 
 .actions {
   margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .btn-primary,
@@ -769,13 +925,14 @@ onMounted(async () => {
   background: #8e1738;
   color: white;
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   text-decoration: none;
 }
 
 .btn-secondary {
   display: inline-block;
+  background: #555;
 }
 
 .empty {
@@ -783,7 +940,7 @@ onMounted(async () => {
   text-align: center;
   color: #777;
   border: 1px dashed #ccc;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .ok-box {
@@ -794,5 +951,29 @@ onMounted(async () => {
 .error-box {
   margin-top: 14px;
   color: #b00020;
+}
+
+@media (max-width: 980px) {
+  .head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .grid,
+  .radio-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field.wide {
+    grid-column: span 1;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .actions .btn-primary {
+    width: 100%;
+  }
 }
 </style>

@@ -12,108 +12,131 @@
     </div>
 
     <div class="card">
-      <div class="toolbar">
+      <div class="search-row">
         <input
           v-model="busqueda"
           type="text"
-          class="input"
+          class="input search-input"
           placeholder="Buscar por expediente, nombre, RFC o CURP"
           @keyup.enter="cargarRegistros"
         />
         <button class="btn-dark" @click="cargarRegistros">Buscar</button>
       </div>
 
-      <div class="meta">
-        Total: {{ registros.length }}
-      </div>
-
-      <div v-if="cargando" class="empty">
-        Cargando registros...
-      </div>
-
-      <div v-else-if="registros.length === 0" class="empty">
-        No hay registros estatales capturados todavía.
-      </div>
-
-      <table v-else class="table">
-        <thead>
-          <tr>
-            <th>Año</th>
-            <th>Sanción ID</th>
-            <th>Expediente</th>
-            <th>Nombre</th>
-            <th>RFC</th>
-            <th>CURP</th>
-            <th>Cargo</th>
-            <th>Dependencia</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in registros" :key="`${item.anio}-${item.sancionid}`">
-            <td>{{ item.anio }}</td>
-            <td>{{ item.sancionid }}</td>
-            <td>{{ item.expediente || "-" }}</td>
-            <td>{{ nombreCompleto(item) || "-" }}</td>
-            <td>{{ item.rfc || "-" }}</td>
-            <td>{{ item.curp || "-" }}</td>
-            <td>{{ item.cargo || "-" }}</td>
-            <td>{{ item.dependencia || "-" }}</td>
-            <td>
-              <NuxtLink
-                class="mini link-mini"
-                :to="`/admin/estatal/ver?anio=${encodeURIComponent(item.anio)}&sancionid=${encodeURIComponent(item.sancionid)}`"
-              >
-                Ver
-              </NuxtLink>
-
-              <NuxtLink
-                class="mini link-mini"
-                :to="`/admin/estatal/editar?anio=${encodeURIComponent(item.anio)}&sancionid=${encodeURIComponent(item.sancionid)}`"
-              >
-                Editar
-              </NuxtLink>
-
-              <button class="mini danger" @click="eliminar(item.anio, item.sancionid)">
-                Eliminar
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div v-if="error" class="error-box">
-        {{ error }}
-      </div>
-
-      <div v-if="mensaje" class="ok-box">
-        {{ mensaje }}
-      </div>
+      <TablaPaginada
+  :rows="registros"
+  :columns="columnas"
+  :row-key="getItemKey"
+  :get-display-name="nombreCompleto"
+  :get-sort-date="obtenerFechaOrden"
+  :loading="cargando"
+  loading-text="Cargando registros..."
+  empty-text="No hay registros estatales capturados todavía."
+  :items-per-page-options="[10, 25, 50, 100]"
+  :default-items-per-page="50"
+  default-sort="reciente"
+  storage-key="estatal"
+  @view-selected="verSeleccionado"
+  @edit-selected="editarSeleccionado"
+  @delete-selected="eliminarSeleccionados"
+/>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, watch, onMounted, onBeforeUnmount } from "vue"
+import { useRouter } from "vue-router"
+import Swal from "sweetalert2"
 
 definePageMeta({
   layout: "admin"
 })
 
+const router = useRouter()
+
 const busqueda = ref("")
 const registros = ref([])
 const cargando = ref(false)
-const error = ref("")
-const mensaje = ref("")
+
+let debounceTimer = null
+
+function limpiarDebounce() {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
+  }
+}
+
+function getItemKey(item) {
+  return `${item.anio}-${item.sancionid}`
+}
 
 function nombreCompleto(item) {
-  return [item.nombres, item.apaterno, item.amaterno].filter(Boolean).join(" ")
+  return [item.nombres, item.apaterno, item.amaterno]
+    .filter(Boolean)
+    .join(" ")
+    .trim()
+}
+
+function obtenerFechaOrden(item) {
+  return item?.fechareg || null
+}
+
+function formatearFecha(value) {
+  if (!value) return "-"
+  const fecha = new Date(value)
+  if (Number.isNaN(fecha.getTime())) return value
+
+  const dia = String(fecha.getDate()).padStart(2, "0")
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0")
+  const anio = fecha.getFullYear()
+  return `${dia}/${mes}/${anio}`
+}
+
+const columnas = [
+  { key: "anio", label: "Año", class: "col-sm" },
+  { key: "sancionid", label: "Sanción ID", class: "col-sm" },
+  { key: "expediente", label: "Expediente", class: "col-md" },
+  {
+    key: "nombre",
+    label: "Nombre",
+    class: "col-lg",
+    format: (row) => nombreCompleto(row) || "-"
+  },
+  { key: "rfc", label: "RFC", class: "col-md" },
+  { key: "curp", label: "CURP", class: "col-lg" },
+  { key: "cargo", label: "Cargo", class: "col-lg" },
+  { key: "dependencia", label: "Dependencia", class: "col-md" },
+  {
+    key: "fechareg",
+    label: "Fecha registro",
+    class: "col-md",
+    format: (row) => formatearFecha(row.fechareg)
+  }
+]
+
+function mostrarError(texto) {
+  Swal.fire({
+    icon: "error",
+    title: "Error",
+    text: texto,
+    confirmButtonColor: "#8e1738"
+  })
+}
+
+function mostrarExito(texto) {
+  Swal.fire({
+    icon: "success",
+    title: "Correcto",
+    text: texto,
+    confirmButtonColor: "#8e1738"
+  })
 }
 
 async function cargarRegistros() {
+  limpiarDebounce()
   cargando.value = true
-  error.value = ""
-  mensaje.value = ""
 
   try {
     const res = await $fetch("/api/sancionados", {
@@ -125,35 +148,92 @@ async function cargarRegistros() {
 
     registros.value = res.results || []
   } catch (e) {
-    error.value = "No se pudieron cargar los registros estatales."
     registros.value = []
+    mostrarError("No se pudieron cargar los registros estatales.")
   } finally {
     cargando.value = false
   }
 }
 
-async function eliminar(anio, sancionid) {
-  mensaje.value = ""
-  error.value = ""
+watch(busqueda, (nuevoValor, valorAnterior) => {
+  const nuevo = nuevoValor.trim()
+  const anterior = (valorAnterior || "").trim()
 
-  const confirmado = window.confirm(`¿Eliminar el registro ${anio}-${sancionid}?`)
-  if (!confirmado) return
+  if (nuevo === anterior) return
+
+  limpiarDebounce()
+
+  debounceTimer = setTimeout(async () => {
+    await cargarRegistros()
+  }, 350)
+})
+
+function verSeleccionado(item) {
+  if (!item) return
+
+  router.push(
+    `/admin/estatal/ver?anio=${encodeURIComponent(item.anio)}&sancionid=${encodeURIComponent(item.sancionid)}`
+  )
+}
+
+function editarSeleccionado(item) {
+  if (!item) return
+
+  router.push(
+    `/admin/estatal/editar?anio=${encodeURIComponent(item.anio)}&sancionid=${encodeURIComponent(item.sancionid)}`
+  )
+}
+
+async function eliminarSeleccionados(items) {
+  if (!items?.length) return
+
+  const texto =
+    items.length === 1
+      ? "¿Eliminar el registro seleccionado?"
+      : `¿Eliminar los ${items.length} registros seleccionados?`
+
+  const resultado = await Swal.fire({
+    title: "Confirmar eliminación",
+    text: texto,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#b00020",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar"
+  })
+
+  if (!resultado.isConfirmed) return
 
   try {
-    const res = await $fetch("/api/estatal/eliminar", {
-      method: "POST",
-      body: { anio, sancionid }
-    })
+    for (const item of items) {
+      await $fetch("/api/estatal/eliminar", {
+        method: "POST",
+        body: {
+          anio: item.anio,
+          sancionid: item.sancionid
+        }
+      })
+    }
 
-    mensaje.value = res.message || "Registro eliminado correctamente."
     await cargarRegistros()
+
+    mostrarExito(
+      items.length === 1
+        ? "Registro eliminado correctamente."
+        : "Registros eliminados correctamente."
+    )
   } catch (e) {
-    error.value = e?.data?.error || "No se pudo eliminar el registro."
+    mostrarError(e?.data?.error || "No se pudo eliminar uno o más registros.")
   }
 }
 
 onMounted(async () => {
   await cargarRegistros()
+})
+
+onBeforeUnmount(() => {
+  limpiarDebounce()
 })
 </script>
 
@@ -183,23 +263,22 @@ onMounted(async () => {
   padding: 18px;
 }
 
-.toolbar {
+.search-row {
   display: flex;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
-.meta {
-  margin-bottom: 16px;
-  color: #666;
-  font-size: 14px;
+.search-input {
+  flex: 1;
+  min-width: 0;
 }
 
 .input {
-  flex: 1;
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 10px 12px;
+  background: white;
 }
 
 .btn-primary {
@@ -210,69 +289,27 @@ onMounted(async () => {
   border-radius: 8px;
   cursor: pointer;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .btn-dark {
   border: none;
   background: #444;
   color: white;
-  padding: 10px 14px;
+  padding: 10px 16px;
   border-radius: 8px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.empty {
-  padding: 42px 20px;
-  text-align: center;
-  color: #777;
-  border: 1px dashed #ccc;
-  border-radius: 8px;
-}
+@media (max-width: 980px) {
+  .head {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table th,
-.table td {
-  border: 1px solid #ddd;
-  padding: 10px;
-  text-align: left;
-  vertical-align: top;
-}
-
-.table th {
-  background: #f1f1f1;
-}
-
-.mini {
-  margin-right: 6px;
-  padding: 6px 10px;
-  border: 1px solid #bbb;
-  background: white;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-.link-mini {
-  text-decoration: none;
-  color: #333;
-  display: inline-block;
-}
-
-.danger {
-  color: #9b102d;
-  border-color: #d8a7b4;
-}
-
-.error-box {
-  margin-top: 14px;
-  color: #b00020;
-}
-
-.ok-box {
-  margin-top: 14px;
-  color: #0a7a2f;
+  .search-row {
+    flex-direction: column;
+  }
 }
 </style>
