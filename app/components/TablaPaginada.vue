@@ -65,7 +65,7 @@
     </div>
 
     <div class="meta">
-      <span>Total resultados: {{ filasOrdenadas.length }}</span>
+      <span>{{ textoTotalResultados }}</span>
       <span v-if="showSelectionCount">Seleccionados: {{ selectedRows.length }}</span>
     </div>
 
@@ -150,7 +150,7 @@
 
         <div class="footer-center">
           <span>{{ textoRango }}</span>
-          <span class="page-info">Página {{ paginaActual }} de {{ totalPaginas }}</span>
+          <span class="page-info">Página {{ paginaVisible }} de {{ totalPaginas }}</span>
         </div>
 
         <div class="footer-right">
@@ -248,11 +248,15 @@ const props = defineProps({
   },
   itemsPerPageOptions: {
     type: Array,
-    default: () => [10, 25, 50, 100]
+    default: () => [10, 25, 50, 100, 200]
   },
   defaultItemsPerPage: {
     type: Number,
     default: 50
+  },
+  maxPageSize: {
+    type: Number,
+    default: 200
   },
   defaultSort: {
     type: String,
@@ -273,6 +277,30 @@ const props = defineProps({
   storageKey: {
     type: String,
     default: ""
+  },
+  serverSide: {
+    type: Boolean,
+    default: false
+  },
+  page: {
+    type: Number,
+    default: 1
+  },
+  totalPages: {
+    type: Number,
+    default: 1
+  },
+  hasNext: {
+    type: Boolean,
+    default: false
+  },
+  hasPrevious: {
+    type: Boolean,
+    default: false
+  },
+  totalCount: {
+    type: Number,
+    default: null
   }
 })
 
@@ -280,7 +308,8 @@ const emit = defineEmits([
   "view-selected",
   "edit-selected",
   "delete-selected",
-  "selection-change"
+  "selection-change",
+  "page-change"
 ])
 
 const paginaActual = ref(1)
@@ -330,6 +359,16 @@ function formatearValor(columna, fila) {
   return valor ?? "-"
 }
 
+function normalizarPorPagina(valor) {
+  const numero = Math.min(props.maxPageSize, Math.max(1, Number(valor)))
+
+  if (props.itemsPerPageOptions.includes(numero)) {
+    return numero
+  }
+
+  return props.defaultItemsPerPage
+}
+
 function cargarPreferencias() {
   if (!import.meta.client || !storagePrefix.value) return
 
@@ -341,10 +380,7 @@ function cargarPreferencias() {
   }
 
   if (porPaginaGuardado) {
-    const numero = Number(porPaginaGuardado)
-    if (props.itemsPerPageOptions.includes(numero)) {
-      porPagina.value = numero
-    }
+    porPagina.value = normalizarPorPagina(porPaginaGuardado)
   }
 }
 
@@ -352,10 +388,14 @@ function guardarPreferencias() {
   if (!import.meta.client || !storagePrefix.value) return
 
   localStorage.setItem(`${storagePrefix.value}:orden`, orden.value)
-  localStorage.setItem(`${storagePrefix.value}:porPagina`, String(porPagina.value))
+  localStorage.setItem(`${storagePrefix.value}:porPagina`, String(normalizarPorPagina(porPagina.value)))
 }
 
 const filasOrdenadas = computed(() => {
+  if (props.serverSide) {
+    return props.rows
+  }
+
   const lista = [...props.rows]
 
   if (orden.value === "nombre_asc") {
@@ -377,13 +417,21 @@ const filasOrdenadas = computed(() => {
   return lista.sort((a, b) => obtenerTiempoFecha(b) - obtenerTiempoFecha(a))
 })
 
+const paginaVisible = computed(() => {
+  return props.serverSide ? props.page : paginaActual.value
+})
+
 const totalPaginas = computed(() => {
+  if (props.serverSide) {
+    return props.totalPages > 0 ? props.totalPages : 1
+  }
+
   const total = filasOrdenadas.value.length
   return total > 0 ? Math.ceil(total / porPagina.value) : 1
 })
 
 const inicioPagina = computed(() => {
-  return (paginaActual.value - 1) * porPagina.value
+  return (paginaVisible.value - 1) * porPagina.value
 })
 
 const finPagina = computed(() => {
@@ -391,20 +439,53 @@ const finPagina = computed(() => {
 })
 
 const filasPaginadas = computed(() => {
+  if (props.serverSide) {
+    return filasOrdenadas.value
+  }
+
   return filasOrdenadas.value.slice(inicioPagina.value, finPagina.value)
 })
 
+const totalResultados = computed(() => {
+  if (props.serverSide && props.totalCount != null) {
+    return props.totalCount
+  }
+
+  return filasOrdenadas.value.length
+})
+
+const textoTotalResultados = computed(() => {
+  if (props.serverSide && props.totalCount == null) {
+    return `Resultados en esta página: ${filasPaginadas.value.length}`
+  }
+
+  return `Total resultados: ${totalResultados.value}`
+})
+
 const textoRango = computed(() => {
-  const total = filasOrdenadas.value.length
+  if (props.serverSide) {
+    const count = filasPaginadas.value.length
+    if (count === 0) return "0 registros"
+
+    return `${count} registro${count === 1 ? "" : "s"} en esta página`
+  }
+
+  const total = totalResultados.value
   if (total === 0) return "0-0 de 0"
 
   const inicio = inicioPagina.value + 1
   const fin = Math.min(finPagina.value, total)
+
   return `${inicio}-${fin} de ${total}`
 })
 
-const puedeIrAtras = computed(() => paginaActual.value > 1)
-const puedeIrAdelante = computed(() => paginaActual.value < totalPaginas.value)
+const puedeIrAtras = computed(() => {
+  return props.serverSide ? props.hasPrevious : paginaVisible.value > 1
+})
+
+const puedeIrAdelante = computed(() => {
+  return props.serverSide ? props.hasNext : paginaVisible.value < totalPaginas.value
+})
 
 const idsPaginaActual = computed(() => {
   return filasPaginadas.value.map((fila) => getKey(fila))
@@ -431,30 +512,74 @@ watch(selectedRows, (rows) => {
   emit("selection-change", rows)
 })
 
+function emitPageChange(page) {
+  emit("page-change", {
+    page,
+    pageSize: porPagina.value,
+    sort: orden.value
+  })
+}
+
+function cambiarPagina(page) {
+  paginaDestino.value = ""
+
+  if (props.serverSide) {
+    if (page < 1 || page > totalPaginas.value || page === paginaVisible.value) return
+    emitPageChange(page)
+    return
+  }
+
+  paginaActual.value = page
+}
+
 watch(
   () => props.rows,
   () => {
     selectedIds.value = []
-    paginaActual.value = 1
     paginaDestino.value = ""
+
+    if (!props.serverSide) {
+      paginaActual.value = 1
+    }
   }
 )
 
-watch(porPagina, () => {
-  paginaActual.value = 1
+watch(porPagina, (nuevoValor) => {
+  const normalizado = normalizarPorPagina(nuevoValor)
+
+  if (normalizado !== nuevoValor) {
+    porPagina.value = normalizado
+    return
+  }
+
   paginaDestino.value = ""
   limpiarSeleccion()
   guardarPreferencias()
+
+  if (props.serverSide) {
+    emitPageChange(1)
+    return
+  }
+
+  paginaActual.value = 1
 })
 
 watch(orden, () => {
-  paginaActual.value = 1
   paginaDestino.value = ""
   limpiarSeleccion()
   guardarPreferencias()
+
+  if (props.serverSide) {
+    emitPageChange(1)
+    return
+  }
+
+  paginaActual.value = 1
 })
 
 watch(filasOrdenadas, () => {
+  if (props.serverSide) return
+
   if (paginaActual.value > totalPaginas.value) {
     paginaActual.value = totalPaginas.value
   }
@@ -502,25 +627,21 @@ function toggleSeleccionPaginaActual() {
 }
 
 function irPrimera() {
-  paginaActual.value = 1
-  paginaDestino.value = ""
+  cambiarPagina(1)
 }
 
 function irAnterior() {
   if (!puedeIrAtras.value) return
-  paginaActual.value -= 1
-  paginaDestino.value = ""
+  cambiarPagina(paginaVisible.value - 1)
 }
 
 function irSiguiente() {
   if (!puedeIrAdelante.value) return
-  paginaActual.value += 1
-  paginaDestino.value = ""
+  cambiarPagina(paginaVisible.value + 1)
 }
 
 function irUltima() {
-  paginaActual.value = totalPaginas.value
-  paginaDestino.value = ""
+  cambiarPagina(totalPaginas.value)
 }
 
 function irAPagina() {
@@ -529,19 +650,16 @@ function irAPagina() {
   if (!pagina || Number.isNaN(pagina)) return
 
   if (pagina < 1) {
-    paginaActual.value = 1
-    paginaDestino.value = ""
+    cambiarPagina(1)
     return
   }
 
   if (pagina > totalPaginas.value) {
-    paginaActual.value = totalPaginas.value
-    paginaDestino.value = ""
+    cambiarPagina(totalPaginas.value)
     return
   }
 
-  paginaActual.value = pagina
-  paginaDestino.value = ""
+  cambiarPagina(pagina)
 }
 
 onMounted(() => {
