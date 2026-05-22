@@ -219,13 +219,10 @@ async function cargarRegistros(opciones = {}) {
   cargando.value = true
 
   try {
-    const res = await $fetch("/api/sancionados", {
-      query: {
-        tipo: "federal",
-        q: busqueda.value.trim() || undefined,
-        page: pagina.value,
-        page_size: itemsPorPagina.value
-      }
+    const res = await sancionadosService.listarFederales({
+      q: busqueda.value.trim() || undefined,
+      page: pagina.value,
+      page_size: itemsPorPagina.value
     })
 
     registros.value = res.results || []
@@ -302,10 +299,7 @@ async function eliminarSeleccionados(items) {
 
   try {
     for (const item of items) {
-      await $fetch("/api/federal/eliminar", {
-        method: "POST",
-        body: { rfc: item.rfc }
-      })
+      await federalService.eliminar(item.rfc)
     }
 
     await cargarRegistros()
@@ -334,19 +328,7 @@ async function subirExcel(event) {
   subiendo.value = true
 
   try {
-    const formData = new FormData()
-    formData.append("file", file)
-
-    const res = await fetch("/api/federal/cargar-excel", {
-      method: "POST",
-      body: formData
-    })
-
-    const data = await res.json()
-
-    if (!res.ok) {
-      throw new Error(data.error || "No se pudo cargar el Excel.")
-    }
+    const data = await federalService.cargarExcel(file)
 
     await cargarRegistros()
 

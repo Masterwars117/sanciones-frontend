@@ -189,9 +189,7 @@ async function cargarDetalle() {
   error.value = ""
 
   try {
-    const res = await $fetch("/api/federal/detalle", {
-      query: { rfc }
-    })
+    const res = await federalService.obtenerDetalle(rfc)
 
     const reg = res.registro || {}
     Object.assign(form, reg)

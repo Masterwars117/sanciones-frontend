@@ -258,9 +258,7 @@ async function cargarDetalle() {
   error.value = ""
 
   try {
-    const res = await $fetch("/api/federal/detalle", {
-      query: { rfc }
-    })
+    const res = await federalService.obtenerDetalle(rfc)
 
     const reg = res.registro || {}
     rfcOriginal.value = reg.rfc || ""
@@ -283,12 +281,9 @@ async function guardar() {
   guardando.value = true
 
   try {
-    const res = await $fetch("/api/federal/editar", {
-      method: "POST",
-      body: {
-        rfc_original: rfcOriginal.value,
-        ...form
-      }
+    const res = await federalService.editar({
+      rfc_original: rfcOriginal.value,
+      ...form
     })
 
     mensaje.value = res.message || "Registro actualizado correctamente."

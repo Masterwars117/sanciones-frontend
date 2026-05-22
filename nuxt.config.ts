@@ -1,4 +1,7 @@
 export default defineNuxtConfig({
+  imports: {
+    dirs: ["services"],
+  },
   nitro: {
     devProxy: {
       "/api": {

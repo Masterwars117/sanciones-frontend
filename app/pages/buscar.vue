@@ -325,9 +325,7 @@ async function cargarResultados() {
 
     if (!expediente.value) return
 
-    const res = await $fetch("/api/buscar-expediente", {
-      query: { q: expediente.value }
-    })
+    const res = await buscarService.porExpediente(expediente.value)
 
     resultadosExpediente.value = res.resultados || []
     buscado.value = true
@@ -346,12 +344,10 @@ async function cargarResultados() {
       return
     }
 
-    const res = await $fetch("/api/buscar-nombre", {
-      query: {
-        paterno: paterno.value,
-        materno: materno.value,
-        nombre: nombre.value
-      }
+    const res = await buscarService.porNombre({
+      paterno: paterno.value,
+      materno: materno.value,
+      nombre: nombre.value
     })
 
     resultadosEstatales.value = res.estatal || []

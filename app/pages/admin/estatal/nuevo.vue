@@ -655,7 +655,7 @@ async function cargarCatalogos() {
   error.value = ""
 
   try {
-    const res = await $fetch("/api/catalogos/estatal")
+    const res = await catalogosService.obtenerEstatales()
     const data = res.catalogos || {}
 
     catalogos.generos = data.generos || []
@@ -718,10 +718,7 @@ async function guardar() {
   guardando.value = true
 
   try {
-    const res = await $fetch("/api/estatal/crear", {
-      method: "POST",
-      body: { ...form }
-    })
+    const res = await estatalService.crear({ ...form })
 
     mensaje.value = res.message || "Registro creado correctamente."
 

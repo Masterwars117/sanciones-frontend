@@ -657,7 +657,7 @@ async function cargarCatalogos() {
   error.value = ""
 
   try {
-    const res = await $fetch("/api/catalogos/estatal")
+    const res = await catalogosService.obtenerEstatales()
     const data = res.catalogos || {}
 
     catalogos.generos = data.generos || []
@@ -728,9 +728,7 @@ async function cargarDetalle() {
   error.value = ""
 
   try {
-    const res = await $fetch("/api/estatal/detalle", {
-      query: { anio, sancionid }
-    })
+    const res = await estatalService.obtenerDetalle(anio, sancionid)
 
     const reg = res.registro || {}
 
@@ -755,13 +753,10 @@ async function guardar() {
   guardando.value = true
 
   try {
-    const res = await $fetch("/api/estatal/editar", {
-      method: "POST",
-      body: {
-        anio_original: anioOriginal.value,
-        sancionid_original: sancionidOriginal.value,
-        ...form
-      }
+    const res = await estatalService.editar({
+      anio_original: anioOriginal.value,
+      sancionid_original: sancionidOriginal.value,
+      ...form
     })
 
     mensaje.value = res.message || "Registro actualizado correctamente."

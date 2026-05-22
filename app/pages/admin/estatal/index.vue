@@ -187,13 +187,10 @@ async function cargarRegistros(opciones = {}) {
   cargando.value = true
 
   try {
-    const res = await $fetch("/api/sancionados", {
-      query: {
-        tipo: "estatal",
-        q: busqueda.value.trim() || undefined,
-        page: pagina.value,
-        page_size: itemsPorPagina.value
-      }
+    const res = await sancionadosService.listarEstatales({
+      q: busqueda.value.trim() || undefined,
+      page: pagina.value,
+      page_size: itemsPorPagina.value
     })
 
     registros.value = res.results || []
@@ -273,13 +270,7 @@ async function eliminarSeleccionados(items) {
 
   try {
     for (const item of items) {
-      await $fetch("/api/estatal/eliminar", {
-        method: "POST",
-        body: {
-          anio: item.anio,
-          sancionid: item.sancionid
-        }
-      })
+      await estatalService.eliminar(item.anio, item.sancionid)
     }
 
     await cargarRegistros()

@@ -246,10 +246,7 @@ async function guardar() {
   guardando.value = true
 
   try {
-    const res = await $fetch("/api/federal/crear", {
-      method: "POST",
-      body: { ...form }
-    })
+    const res = await federalService.crear({ ...form })
 
     mensaje.value = res.message || "Registro creado correctamente."
 

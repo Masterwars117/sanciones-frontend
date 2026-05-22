@@ -471,7 +471,7 @@ const descripcionTipoEntidad = computed(() => {
 
 async function cargarCatalogos() {
   try {
-    const res = await $fetch("/api/catalogos/estatal")
+    const res = await catalogosService.obtenerEstatales()
     const data = res.catalogos || {}
 
     catalogos.generos = data.generos || []
@@ -502,9 +502,7 @@ async function cargarDetalle() {
   error.value = ""
 
   try {
-    const res = await $fetch("/api/estatal/detalle", {
-      query: { anio, sancionid }
-    })
+    const res = await estatalService.obtenerDetalle(anio, sancionid)
 
     const reg = res.registro || {}
     Object.assign(form, reg)
