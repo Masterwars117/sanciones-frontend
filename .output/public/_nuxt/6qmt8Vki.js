@@ -1,0 +1,1 @@
+import{_ as t,g as o,c as a,l as s,o as c}from"./CZoZ0SsP.js";const n={class:"redirecting"},r={__name:"index",setup(_){const e=s();return o(()=>{e.replace("/admin/estatal")}),(d,i)=>(c(),a("div",n," Cargando módulo... "))}},p=t(r,[["__scopeId","data-v-9ccde19f"]]);export{p as default};

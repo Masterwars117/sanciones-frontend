@@ -1,0 +1,8 @@
+const registro_vue_vue_type_style_index_0_scoped_2c23b941_lang = ".login-page[data-v-2c23b941]{align-items:center;background:#f5f6f8;display:flex;font-family:Arial,sans-serif;justify-content:center;min-height:100vh}.login-card[data-v-2c23b941]{background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 3px 12px #00000014;padding:28px;width:380px}.login-title[data-v-2c23b941]{color:#333;font-size:28px;margin:0 0 20px;text-align:center}.input[data-v-2c23b941]{border:1px solid #ccc;border-radius:8px;box-sizing:border-box;margin-bottom:12px;padding:10px 12px;width:100%}.btn-login[data-v-2c23b941]{background:#8e1738;border:none;border-radius:8px;color:#fff;cursor:pointer;font-weight:700;padding:11px;width:100%}.error-text[data-v-2c23b941]{color:#b00020;margin-top:12px;text-align:center}";
+
+const registroStyles_CgV7aOD4 = [
+  registro_vue_vue_type_style_index_0_scoped_2c23b941_lang
+];
+
+export { registroStyles_CgV7aOD4 as default };
+//# sourceMappingURL=registro-styles.CgV7aOD4.mjs.map

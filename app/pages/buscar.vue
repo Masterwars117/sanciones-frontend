@@ -1,208 +1,172 @@
 <template>
-  <div class="site-wrapper">
-    <header class="header">
-      <div class="header-left">tabasco.gob.mx</div>
-      <div class="header-center">SERVIDORES PÚBLICOS Y PARTICULARES SANCIONADOS</div>
-      <div class="header-right">
-        <button type="button" class="btn-nav" @click="irModo('nombre')">Buscar por Nombre</button>
-        <button type="button" class="btn-nav" @click="irModo('expediente')">Buscar por Expediente</button>
-      </div>
-    </header>
+  <div class="flex min-h-screen flex-col bg-background">
+    <LandingHeaderGob />
 
-    <main class="main-content">
-      <div class="legal-text">
-        EN TÉRMINOS DE LO PREVISTO POR LOS ARTÍCULOS 27, 77 Y 80 DE LA LEY GENERAL DE RESPONSABILIDADES ADMINISTRATIVAS
-      </div>
-
-      <div class="container">
-        <div class="color-bar">
-          <div class="bar-blue-dark"></div>
-          <div class="bar-blue-light"></div>
-          <div class="bar-orange"></div>
+    <main class="flex-1">
+      <section class="relative bg-gradient-to-br from-[#691C32] to-[#9F2241] py-10 text-white md:py-14">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djJoLTJ2LTJoMnptMC00aDJ2Mmgtdnptcm0tNGgydjItMnYtMnptLTR2MmgtMnYtMmgyem0tNCAwaC0ydi0yaDJ2MnptLTQgMGgtMnYtMmgydjJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-50" />
+        <div class="relative mx-auto max-w-7xl px-4">
+          <div class="mx-auto max-w-3xl text-center">
+            <div class="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm">
+              <Shield class="h-4 w-4" />
+              Sistema de Consulta Oficial
+            </div>
+            <h1 class="text-balance text-2xl font-bold tracking-tight md:text-3xl lg:text-4xl">
+              Servidores Públicos y Particulares Sancionados
+            </h1>
+            <p class="mt-4 text-pretty text-base leading-relaxed text-white/90 md:text-lg">
+              En términos de lo previsto por los artículos 27, 77 y 80 de la Ley General de Responsabilidades Administrativas
+            </p>
+          </div>
         </div>
+      </section>
 
-        <div class="content-flex">
-          <div class="search-area">
-            <h3 class="search-title">
-              {{ modo === 'expediente' ? 'BÚSQUEDA POR EXPEDIENTE' : 'BÚSQUEDA POR NOMBRE' }}
-            </h3>
+      <section id="consultas" class="py-12 md:py-16">
+        <div class="mx-auto max-w-5xl px-4">
+          <div class="mb-8 text-center">
+            <h2 class="text-2xl font-bold text-foreground">
+              {{ modo === 'expediente' ? 'Búsqueda por Expediente' : 'Búsqueda por Nombre' }}
+            </h2>
+            <p class="mt-2 text-muted-foreground">
+              Consulte el registro de servidores públicos y particulares sancionados del Estado de Tabasco.
+            </p>
+          </div>
 
-            <!-- FORMULARIO EXPEDIENTE -->
-            <div v-if="modo === 'expediente'" class="form-group">
-              <div class="input-row">
-                <input
-                  v-model="expediente"
-                  type="text"
-                  class="input-field"
-                  @keyup.enter="buscarExpediente"
-                />
-                <button type="button" @click="buscarExpediente" class="btn-search">Buscar</button>
-              </div>
-              <span class="input-label">*Expediente</span>
-            </div>
+          <LandingSearchForm
+            :standalone="false"
+            :tipo="modo"
+            :expediente="expediente"
+            :paterno="paterno"
+            :materno="materno"
+            :nombre="nombre"
+            @change-tipo="irModo"
+            @update:expediente="expediente = $event"
+            @update:paterno="paterno = $event"
+            @update:materno="materno = $event"
+            @update:nombre="nombre = $event"
+            @submit="onSubmit"
+            @clear="onClear"
+          />
 
-            <!-- FORMULARIO NOMBRE -->
-            <div v-else class="form-group-name">
-              <div class="name-grid">
-                <div class="field-block">
-                  <input v-model="paterno" class="input-field" />
-                  <span class="input-label">*Apellido Paterno</span>
-                </div>
+          <div v-if="buscado && sinResultados" class="mt-8 rounded-lg border border-[#9F2241]/20 bg-[#9F2241]/5 px-6 py-4 text-center font-medium text-[#9F2241]">
+            Sin resultados que mostrar
+          </div>
 
-                <div class="field-block">
-                  <input v-model="materno" class="input-field" />
-                  <span class="input-label">*Apellido Materno</span>
-                </div>
-
-                <div class="field-block">
-                  <input v-model="nombre" class="input-field" />
-                  <span class="input-label">*Nombre</span>
-                </div>
-
-                <button type="button" @click="buscarNombre" class="btn-search mt-10">Buscar</button>
-              </div>
-            </div>
-
-            <!-- SIN RESULTADOS -->
-            <div v-if="buscado && sinResultados" class="no-results">
-              SIN RESULTADOS QUE MOSTRAR
-            </div>
-
-            <!-- RESULTADOS EXPEDIENTE -->
-            <div v-if="modo === 'expediente' && resultadosExpediente.length > 0" class="results-wrap">
-              <table class="results-table">
-                <thead>
+          <div v-if="modo === 'expediente' && resultadosExpediente.length > 0" class="mt-8">
+            <h3 class="mb-4 text-lg font-semibold text-foreground">Resultados</h3>
+            <div class="overflow-x-auto rounded-lg border border-border bg-white shadow-sm">
+              <table class="w-full text-sm">
+                <thead class="bg-muted">
                   <tr>
-                    <th>AÑO</th>
-                    <th>SANCIÓN ID</th>
-                    <th>EXPEDIENTE</th>
-                    <th>NOMBRE</th>
-                    <th>CARGO</th>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Año</th>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Sanción ID</th>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Expediente</th>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Nombre</th>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Cargo</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="item in resultadosExpediente" :key="`${item.anio}-${item.sancionid}`">
-                    <td>{{ item.anio }}</td>
-                    <td>{{ item.sancionid }}</td>
-                    <td>{{ item.expediente }}</td>
-                    <td>{{ nombreCompletoEstatal(item) }}</td>
-                    <td>{{ item.cargo }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- RESULTADOS NOMBRE -->
-            <div v-if="modo === 'nombre' && resultadosEstatales.length > 0" class="results-wrap">
-              <h4 class="results-title">RESULTADOS ESTATALES</h4>
-              <table class="results-table">
-                <thead>
-                  <tr>
-                    <th>AÑO</th>
-                    <th>SANCIÓN ID</th>
-                    <th>NOMBRE</th>
-                    <th>DEPENDENCIA</th>
-                    <th>CARGO</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="item in resultadosEstatales" :key="`${item.anio}-${item.sancionid}`">
-                    <td>{{ item.anio }}</td>
-                    <td>{{ item.sancionid }}</td>
-                    <td>{{ nombreCompletoEstatal(item) }}</td>
-                    <td>{{ item.dependencia }}</td>
-                    <td>{{ item.cargo }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div v-if="modo === 'nombre' && resultadosFederales.length > 0" class="results-wrap">
-              <h4 class="results-title">RESULTADOS FEDERALES</h4>
-              <table class="results-table">
-                <thead>
-                  <tr>
-                    <th>RFC</th>
-                    <th>HOMOCLAVE</th>
-                    <th>NOMBRE</th>
-                    <th>DEPENDENCIA</th>
-                    <th>CARGO</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="item in resultadosFederales" :key="`${item.rfc}-${item.homoclave}`">
-                    <td>{{ item.rfc }}</td>
-                    <td>{{ item.homoclave }}</td>
-                    <td>{{ nombreCompletoFederal(item) }}</td>
-                    <td>{{ item.dependencia }}</td>
-                    <td>{{ item.cargo }}</td>
+                  <tr
+                    v-for="item in resultadosExpediente"
+                    :key="`${item.anio}-${item.sancionid}`"
+                    class="border-t border-border hover:bg-muted/50"
+                  >
+                    <td class="px-4 py-3 text-foreground">{{ item.anio }}</td>
+                    <td class="px-4 py-3 text-foreground">{{ item.sancionid }}</td>
+                    <td class="px-4 py-3 text-foreground">{{ item.expediente }}</td>
+                    <td class="px-4 py-3 text-foreground">{{ nombreCompletoEstatal(item) }}</td>
+                    <td class="px-4 py-3 text-foreground">{{ item.cargo }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
 
-          <div class="sidebar">
-            <div class="lineamientos">
-              <p class="lin-title">LINEAMIENTOS</p>
-              <p class="lin-file">Archivo .PDF</p>
-              <p class="lin-size">2.53 MB</p>
+          <div v-if="modo === 'nombre' && resultadosEstatales.length > 0" class="mt-8">
+            <h3 class="mb-4 text-lg font-semibold text-foreground">Resultados Estatales</h3>
+            <div class="overflow-x-auto rounded-lg border border-border bg-white shadow-sm">
+              <table class="w-full text-sm">
+                <thead class="bg-muted">
+                  <tr>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Año</th>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Sanción ID</th>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Nombre</th>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Dependencia</th>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Cargo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="item in resultadosEstatales"
+                    :key="`${item.anio}-${item.sancionid}`"
+                    class="border-t border-border hover:bg-muted/50"
+                  >
+                    <td class="px-4 py-3 text-foreground">{{ item.anio }}</td>
+                    <td class="px-4 py-3 text-foreground">{{ item.sancionid }}</td>
+                    <td class="px-4 py-3 text-foreground">{{ nombreCompletoEstatal(item) }}</td>
+                    <td class="px-4 py-3 text-foreground">{{ item.dependencia }}</td>
+                    <td class="px-4 py-3 text-foreground">{{ item.cargo }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div v-if="modo === 'nombre' && resultadosFederales.length > 0" class="mt-8">
+            <h3 class="mb-4 text-lg font-semibold text-foreground">Resultados Federales</h3>
+            <div class="overflow-x-auto rounded-lg border border-border bg-white shadow-sm">
+              <table class="w-full text-sm">
+                <thead class="bg-muted">
+                  <tr>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">RFC</th>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Homoclave</th>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Nombre</th>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Dependencia</th>
+                    <th class="px-4 py-3 text-left font-semibold text-foreground">Cargo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="item in resultadosFederales"
+                    :key="`${item.rfc}-${item.homoclave}`"
+                    class="border-t border-border hover:bg-muted/50"
+                  >
+                    <td class="px-4 py-3 text-foreground">{{ item.rfc }}</td>
+                    <td class="px-4 py-3 text-foreground">{{ item.homoclave }}</td>
+                    <td class="px-4 py-3 text-foreground">{{ nombreCompletoFederal(item) }}</td>
+                    <td class="px-4 py-3 text-foreground">{{ item.dependencia }}</td>
+                    <td class="px-4 py-3 text-foreground">{{ item.cargo }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </main>
 
-    <footer class="footer">
-      <div class="footer-top">
-        <div class="footer-logo">
-          <img
-            src="https://tabasco.gob.mx/sites/default/files/logo-footer-tabasco_2019.png"
-            alt="Escudo Tabasco"
-            class="escudo"
-          />
-        </div>
-
-        <div class="footer-col">
-          <h4 class="col-title">CONTACTO</h4>
-          <p class="col-text">SECRETARÍA DE LA FUNCIÓN PÚBLICA</p>
-          <p class="col-text">Av. Paseo Tabasco #1504 Col. Tabasco 2000,</p>
-          <p class="col-text">C.P. 86035,</p>
-          <p class="col-text">Villahermosa, Tabasco, MX</p>
-          <p class="col-text">Tel. +52 (993) 3 10 47 80 Ext. 5090</p>
-          <a href="https://www.gob.mx/curp/" class="footer-link-gold" target="_blank"> Consulta tu CURP aquí</a>
-        </div>
-
-        <div class="footer-col">
-          <h4 class="col-title">TRANSPARENCIA</h4>
-          <a href="https://transparencia.tabasco.gob.mx/" class="footer-link"> Portal Transparencia</a>
-          <a href="https://itaip.org.mx/" class="footer-link">ITAIP</a>
-          <a href="https://www.infomextabasco.org.mx/" class="footer-link">Infomex</a>
-          <a href="https://portalanticorrupcion.tabasco.gob.mx:85/aviso-de-privacidad" class="footer-link">Aviso de Privacidad</a>
-        </div>
-
-        <div class="footer-col">
-          <h4 class="col-title">TWITTER</h4>
-          <a href="https://twitter.com/Gobierno_Tab" class="footer-link-gold" target="_blank">Tweets by Gobierno_Tab</a>
-        </div>
-        </div>
-
-      <div class="footer-bottom">
-        <div class="bottom-content">
-          <span>GOBIERNO DEL ESTADO DE TABASCO © DERECHOS RESERVADOS</span>
-          <div class="bottom-right">
-            <span>SECRETARÍA DE LA FUNCIÓN PÚBLICA</span>
-            <span>UNIDAD DE APOYO TÉCNICO E INFORMÁTICO</span>
-          </div>
-        </div>
-      </div>
-    </footer>
+    <LandingFooterGob />
   </div>
 </template>
 
 <script setup>
 import { computed, ref, watch, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
+import { Shield } from "lucide-vue-next"
+
+definePageMeta({
+  layout: "landing",
+})
+
+useHead({
+  title: "Resultados de Búsqueda | Sancionados Tabasco",
+  meta: [
+    {
+      name: "description",
+      content: "Consulta de resultados de servidores públicos y particulares sancionados del Estado de Tabasco",
+    },
+  ],
+})
 
 const route = useRoute()
 const router = useRouter()
@@ -261,8 +225,8 @@ function irModo(nuevoModo) {
         tipo: "nombre",
         paterno: "",
         materno: "",
-        nombre: ""
-      }
+        nombre: "",
+      },
     })
     return
   }
@@ -276,9 +240,26 @@ function irModo(nuevoModo) {
     path: "/buscar",
     query: {
       tipo: "expediente",
-      q: ""
-    }
+      q: "",
+    },
   })
+}
+
+function onSubmit() {
+  if (modo.value === "expediente") {
+    buscarExpediente()
+    return
+  }
+  buscarNombre()
+}
+
+function onClear() {
+  expediente.value = ""
+  paterno.value = ""
+  materno.value = ""
+  nombre.value = ""
+  limpiarResultados()
+  buscado.value = false
 }
 
 async function buscarExpediente() {
@@ -288,8 +269,8 @@ async function buscarExpediente() {
     path: "/buscar",
     query: {
       tipo: "expediente",
-      q: expediente.value.trim()
-    }
+      q: expediente.value.trim(),
+    },
   })
 }
 
@@ -302,8 +283,8 @@ async function buscarNombre() {
       tipo: "nombre",
       paterno: paterno.value.trim(),
       materno: materno.value.trim(),
-      nombre: nombre.value.trim()
-    }
+      nombre: nombre.value.trim(),
+    },
   })
 }
 
@@ -347,7 +328,7 @@ async function cargarResultados() {
     const res = await buscarService.porNombre({
       paterno: paterno.value,
       materno: materno.value,
-      nombre: nombre.value
+      nombre: nombre.value,
     })
 
     resultadosEstatales.value = res.estatal || []
@@ -368,261 +349,3 @@ onMounted(async () => {
   await cargarResultados()
 })
 </script>
-
-<style scoped>
-.site-wrapper {
-  font-family: Arial, sans-serif;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.header {
-  background: #9e1b32;
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 25px;
-}
-
-.header-center {
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-
-.btn-nav {
-  background: white;
-  color: #555;
-  border: none;
-  padding: 8px 15px;
-  margin-left: 10px;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-.main-content {
-  flex: 1;
-  background: white;
-}
-
-.legal-text {
-  text-align: center;
-  padding: 25px 0;
-  font-weight: bold;
-  font-size: 1.1rem;
-  max-width: 90%;
-  margin: 0 auto;
-}
-
-.container {
-  display: flex;
-  max-width: 1200px;
-  margin: 0 auto;
-  position: relative;
-}
-
-.color-bar {
-  width: 25px;
-  display: flex;
-  flex-direction: column;
-}
-
-.bar-blue-dark { background: #334d82; height: 50px; }
-.bar-blue-light { background: #0099cc; height: 50px; }
-.bar-orange { background: #d9534f; height: 50px; }
-
-.content-flex {
-  display: flex;
-  width: 100%;
-  padding: 20px 40px;
-}
-
-.search-area {
-  flex: 1;
-}
-
-.search-title {
-  color: #444;
-  font-size: 1rem;
-  margin-bottom: 20px;
-}
-
-.input-row {
-  display: flex;
-  align-items: center;
-}
-
-.input-field {
-  border: 1px solid #ccc;
-  padding: 8px;
-  width: 300px;
-  border-radius: 4px;
-}
-
-.btn-search {
-  background: #f5f5f5;
-  border: 1px solid #ccc;
-  padding: 8px 15px;
-  margin-left: 10px;
-  cursor: pointer;
-}
-
-.input-label {
-  display: block;
-  font-size: 0.85rem;
-  color: #666;
-  margin-top: 5px;
-}
-
-.name-grid {
-  display: grid;
-  grid-template-columns: repeat(4, auto);
-  gap: 10px;
-  align-items: start;
-}
-
-.field-block {
-  display: flex;
-  flex-direction: column;
-}
-
-.field-block .input-field {
-  width: 220px;
-}
-
-.btn-name-search {
-  margin-left: 0;
-  align-self: start;
-}
-
-.sidebar {
-  width: 150px;
-  text-align: right;
-}
-
-.lin-title {
-  font-weight: bold;
-  font-size: 0.75rem;
-  margin: 0;
-}
-
-.lin-file {
-  font-size: 0.75rem;
-  margin: 2px 0;
-}
-
-.lin-size {
-  font-size: 0.75rem;
-  font-weight: bold;
-  margin: 0;
-}
-
-.no-results {
-  margin-top: 35px;
-  background: #d3d3d3;
-  color: #8b0000;
-  font-weight: bold;
-  text-align: center;
-  padding: 8px 0;
-  font-size: 1.05rem;
-}
-
-.results-wrap {
-  margin-top: 30px;
-  max-width: 1000px;
-}
-
-.results-title {
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.results-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-  background: white;
-}
-
-.results-table th,
-.results-table td {
-  border: 1px solid #cfcfcf;
-  padding: 8px;
-  text-align: left;
-}
-
-.results-table th {
-  background: #efefef;
-}
-
-.footer {
-  background: #2c2c2e;
-  color: white;
-  padding-top: 50px;
-}
-
-.footer-top {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-around;
-  padding-bottom: 50px;
-}
-
-.escudo {
-  width: 45px;
-  opacity: 0.8;
-}
-
-.col-title {
-  color: #bc955c;
-  font-size: 0.9rem;
-  margin-bottom: 15px;
-}
-
-.col-text {
-  font-size: 0.75rem;
-  margin: 3px 0;
-  line-height: 1.4;
-  color: #ccc;
-}
-
-.footer-link {
-  color: #ccc;
-  text-decoration: none;
-  display: block;
-  font-size: 0.75rem;
-  margin-bottom: 8px;
-  border-bottom: 1px solid #444;
-  padding-bottom: 5px;
-}
-
-.footer-link-gold {
-  color: #bc955c;
-  text-decoration: none;
-  font-size: 0.75rem;
-}
-
-.footer-bottom {
-  background: #242426;
-  padding: 20px;
-  font-size: 0.7rem;
-  border-top: 1px solid #333;
-}
-
-.bottom-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.bottom-right {
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-}
-</style>
