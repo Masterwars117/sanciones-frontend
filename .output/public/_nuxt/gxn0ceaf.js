@@ -1,1 +1,0 @@
-import{_ as t,m as o,c as a,i as s,o as c}from"./i2mA5IHC.js";const n={class:"redirecting"},r={__name:"index",setup(_){const e=s();return o(()=>{e.replace("/admin/estatal")}),(d,i)=>(c(),a("div",n," Cargando módulo... "))}},u=t(r,[["__scopeId","data-v-9ccde19f"]]);export{u as default};

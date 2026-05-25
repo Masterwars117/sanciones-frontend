@@ -7,7 +7,7 @@
         :class="searchType === 'nombre'
           ? 'border-b-2 border-[#9F2241] bg-[#9F2241]/5 text-[#9F2241]'
           : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
-        @click="searchType = 'nombre'"
+        @click="setSearchType('nombre')"
       >
         <User class="h-4 w-4" />
         Buscar por Nombre
@@ -18,7 +18,7 @@
         :class="searchType === 'expediente'
           ? 'border-b-2 border-[#9F2241] bg-[#9F2241]/5 text-[#9F2241]'
           : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
-        @click="searchType = 'expediente'"
+        @click="setSearchType('expediente')"
       >
         <FileText class="h-4 w-4" />
         Buscar por Expediente
@@ -34,11 +34,11 @@
             </label>
             <input
               id="apellido-paterno"
-              v-model="paterno"
+              :value="paterno"
               type="text"
               placeholder="Ej. García"
-              required
               class="w-full rounded border border-border px-3 py-2 text-sm focus:border-[#9F2241] focus:outline-none focus:ring-1 focus:ring-[#9F2241]"
+              @input="updateField('paterno', $event.target.value)"
             />
           </div>
           <div class="space-y-2">
@@ -47,11 +47,11 @@
             </label>
             <input
               id="apellido-materno"
-              v-model="materno"
+              :value="materno"
               type="text"
               placeholder="Ej. López"
-              required
               class="w-full rounded border border-border px-3 py-2 text-sm focus:border-[#9F2241] focus:outline-none focus:ring-1 focus:ring-[#9F2241]"
+              @input="updateField('materno', $event.target.value)"
             />
           </div>
           <div class="space-y-2">
@@ -60,11 +60,11 @@
             </label>
             <input
               id="nombre"
-              v-model="nombre"
+              :value="nombre"
               type="text"
               placeholder="Ej. Juan Carlos"
-              required
               class="w-full rounded border border-border px-3 py-2 text-sm focus:border-[#9F2241] focus:outline-none focus:ring-1 focus:ring-[#9F2241]"
+              @input="updateField('nombre', $event.target.value)"
             />
           </div>
         </div>
@@ -77,11 +77,11 @@
           </label>
           <input
             id="expediente"
-            v-model="expediente"
+            :value="expediente"
             type="text"
             placeholder="Ej. EXP-2024-001234"
-            required
             class="w-full rounded border border-border px-3 py-2 text-sm focus:border-[#9F2241] focus:outline-none focus:ring-1 focus:ring-[#9F2241]"
+            @input="updateField('expediente', $event.target.value)"
           />
           <p class="text-xs text-muted-foreground">
             Ingrese el número de expediente completo para realizar la búsqueda.
@@ -93,7 +93,7 @@
         <button
           type="button"
           class="rounded border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
-          @click="limpiar"
+          @click="handleClear"
         >
           Limpiar
         </button>
@@ -110,28 +110,92 @@
 </template>
 
 <script setup>
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
 import { Search, User, FileText } from "lucide-vue-next"
 
+const props = defineProps({
+  standalone: { type: Boolean, default: true },
+  tipo: { type: String, default: "nombre" },
+  expediente: { type: String, default: "" },
+  paterno: { type: String, default: "" },
+  materno: { type: String, default: "" },
+  nombre: { type: String, default: "" },
+})
+
+const emit = defineEmits([
+  "update:tipo",
+  "update:expediente",
+  "update:paterno",
+  "update:materno",
+  "update:nombre",
+  "submit",
+  "clear",
+  "change-tipo",
+])
+
 const router = useRouter()
 
-const searchType = ref("nombre")
-const expediente = ref("")
-const paterno = ref("")
-const materno = ref("")
-const nombre = ref("")
+const internalTipo = ref("nombre")
+const internalExpediente = ref("")
+const internalPaterno = ref("")
+const internalMaterno = ref("")
+const internalNombre = ref("")
 
-function limpiar() {
-  expediente.value = ""
-  paterno.value = ""
-  materno.value = ""
-  nombre.value = ""
+const searchType = computed({
+  get: () => (props.standalone ? internalTipo.value : props.tipo),
+  set: (value) => {
+    if (props.standalone) {
+      internalTipo.value = value
+      return
+    }
+    emit("update:tipo", value)
+  },
+})
+
+const expediente = computed(() => (props.standalone ? internalExpediente.value : props.expediente))
+const paterno = computed(() => (props.standalone ? internalPaterno.value : props.paterno))
+const materno = computed(() => (props.standalone ? internalMaterno.value : props.materno))
+const nombre = computed(() => (props.standalone ? internalNombre.value : props.nombre))
+
+function updateField(field, value) {
+  if (props.standalone) {
+    if (field === "expediente") internalExpediente.value = value
+    if (field === "paterno") internalPaterno.value = value
+    if (field === "materno") internalMaterno.value = value
+    if (field === "nombre") internalNombre.value = value
+    return
+  }
+  emit(`update:${field}`, value)
+}
+
+function setSearchType(tipo) {
+  if (props.standalone) {
+    searchType.value = tipo
+    return
+  }
+  emit("change-tipo", tipo)
+}
+
+function handleClear() {
+  if (props.standalone) {
+    internalExpediente.value = ""
+    internalPaterno.value = ""
+    internalMaterno.value = ""
+    internalNombre.value = ""
+    return
+  }
+  emit("clear")
 }
 
 function handleSubmit() {
+  if (!props.standalone) {
+    emit("submit")
+    return
+  }
+
   if (searchType.value === "expediente") {
-    const exp = expediente.value.trim()
+    const exp = internalExpediente.value.trim()
     if (!exp) return
 
     router.push({
@@ -141,9 +205,9 @@ function handleSubmit() {
     return
   }
 
-  const pat = paterno.value.trim()
-  const mat = materno.value.trim()
-  const nom = nombre.value.trim()
+  const pat = internalPaterno.value.trim()
+  const mat = internalMaterno.value.trim()
+  const nom = internalNombre.value.trim()
 
   if (!pat && !mat && !nom) return
 

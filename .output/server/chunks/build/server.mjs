@@ -403,6 +403,9 @@ function getRouteRules(arg) {
     return {};
   }
 }
+const __nuxt_page_meta$b = {
+  layout: "landing"
+};
 const __nuxt_page_meta$a = {
   layout: "landing"
 };
@@ -440,13 +443,14 @@ const _routes = [
   {
     name: "index",
     path: "/",
-    meta: __nuxt_page_meta$a || {},
-    component: () => import('./index-4CrYuoIY.mjs')
+    meta: __nuxt_page_meta$b || {},
+    component: () => import('./index-ClKvmNbq.mjs')
   },
   {
     name: "buscar",
     path: "/buscar",
-    component: () => import('./buscar-DBXCYBh3.mjs')
+    meta: __nuxt_page_meta$a || {},
+    component: () => import('./buscar-DMUfHdR6.mjs')
   },
   {
     name: "registro",
