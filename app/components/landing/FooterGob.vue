@@ -1,5 +1,5 @@
 <template>
-  <footer class="bg-[#235B4E] text-white">
+  <footer class="footer-gob text-white">
     <div class="mx-auto max-w-7xl px-4 py-12">
       <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
         <div class="space-y-4">
@@ -132,7 +132,7 @@
       </div>
     </div>
 
-    <div class="border-t border-white/10 bg-[#10312B]">
+    <div class="border-t border-white/10">
       <div class="mx-auto max-w-7xl px-4 py-4">
         <div class="flex flex-col items-center justify-between gap-4 text-center text-xs text-white/60 sm:flex-row sm:text-left">
           <p>{{ year }} Gobierno del Estado de Tabasco. Todos los derechos reservados.</p>
@@ -151,3 +151,9 @@ import { Phone, Mail, MapPin, ExternalLink } from "lucide-vue-next"
 
 const year = new Date().getFullYear()
 </script>
+
+<style scoped>
+.footer-gob {
+  background-color: #BC955C;
+}
+</style>
