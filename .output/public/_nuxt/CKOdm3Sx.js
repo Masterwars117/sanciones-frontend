@@ -1,0 +1,1 @@
+import{a as t}from"./CL2XKkBz.js";const l={obtenerDetalle(e,a){return t("/estatal/detalle",{query:{anio:e,sancionid:a}})},crear(e){return t("/estatal/crear",{method:"POST",body:e})},editar(e){return t("/estatal/editar",{method:"POST",body:e})},eliminar(e,a){return t("/estatal/eliminar",{method:"POST",body:{anio:e,sancionid:a}})}};export{l as e};
