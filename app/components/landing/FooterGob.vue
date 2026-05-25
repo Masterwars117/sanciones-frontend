@@ -4,7 +4,7 @@
       <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
         <div class="space-y-4">
           <div class="flex items-center gap-3">
-            <div class="flex h-12 w-12 items-center justify-center rounded bg-white/10">
+            <div class="flex h-12 w-12 items-center justify-center rounded border border-white">
               <svg viewBox="0 0 40 40" class="h-8 w-8 text-white" fill="currentColor">
                 <path d="M20 4L4 12v16l16 8 16-8V12L20 4zm0 4l12 6v12l-12 6-12-6V14l12-6z" />
                 <circle cx="20" cy="20" r="6" fill="currentColor" />
@@ -12,10 +12,10 @@
             </div>
             <div>
               <span class="block text-xl font-bold">TABASCO</span>
-              <span class="block text-xs text-white/70">.gob.mx</span>
+              <span class="block text-xs">.gob.mx</span>
             </div>
           </div>
-          <p class="text-sm leading-relaxed text-white/80">
+          <p class="text-sm leading-relaxed">
             Secretaría de la Función Pública del Gobierno del Estado de Tabasco.
             Comprometidos con la transparencia y el combate a la corrupción.
           </p>
@@ -23,7 +23,7 @@
 
         <div id="contacto" class="space-y-4">
           <h3 class="text-lg font-semibold">Contacto</h3>
-          <ul class="space-y-3 text-sm text-white/80">
+          <ul class="space-y-3 text-sm">
             <li class="flex items-start gap-3">
               <MapPin class="mt-0.5 h-4 w-4 shrink-0" />
               <span>Av. Paseo Tabasco #1504 Col. Tabasco 2000, C.P. 86035, Villahermosa, Tabasco, MX</span>
@@ -47,7 +47,7 @@
             <li>
               <a
                 href="https://transparencia.tabasco.gob.mx/"
-                class="flex items-center gap-2 text-white/80 hover:text-white hover:underline"
+                class="flex items-center gap-2 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -58,7 +58,7 @@
             <li>
               <a
                 href="https://itaip.org.mx/"
-                class="flex items-center gap-2 text-white/80 hover:text-white hover:underline"
+                class="flex items-center gap-2 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -69,7 +69,7 @@
             <li>
               <a
                 href="https://www.infomextabasco.org.mx/"
-                class="flex items-center gap-2 text-white/80 hover:text-white hover:underline"
+                class="flex items-center gap-2 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -80,7 +80,7 @@
             <li>
               <a
                 href="https://portalanticorrupcion.tabasco.gob.mx:85/aviso-de-privacidad"
-                class="flex items-center gap-2 text-white/80 hover:text-white hover:underline"
+                class="flex items-center gap-2 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -97,7 +97,7 @@
             <li>
               <a
                 href="https://www.gob.mx"
-                class="flex items-center gap-2 text-white/80 hover:text-white hover:underline"
+                class="flex items-center gap-2 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -108,7 +108,7 @@
             <li>
               <a
                 href="https://www.gob.mx/curp/"
-                class="flex items-center gap-2 text-white/80 hover:text-white hover:underline"
+                class="flex items-center gap-2 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -119,7 +119,7 @@
             <li>
               <a
                 href="https://twitter.com/Gobierno_Tab"
-                class="flex items-center gap-2 text-white/80 hover:text-white hover:underline"
+                class="flex items-center gap-2 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -132,9 +132,9 @@
       </div>
     </div>
 
-    <div class="border-t border-white/10">
+    <div class="border-t border-white">
       <div class="mx-auto max-w-7xl px-4 py-4">
-        <div class="flex flex-col items-center justify-between gap-4 text-center text-xs text-white/60 sm:flex-row sm:text-left">
+        <div class="flex flex-col items-center justify-between gap-4 text-center text-xs sm:flex-row sm:text-left">
           <p>{{ year }} Gobierno del Estado de Tabasco. Todos los derechos reservados.</p>
           <div class="flex gap-4">
             <span>Secretaría de la Función Pública</span>
