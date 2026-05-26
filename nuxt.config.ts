@@ -4,6 +4,13 @@ export default defineNuxtConfig({
   css: ["~/assets/css/gob-theme.css"],
   vite: {
     plugins: [tailwindcss()],
+    optimizeDeps: {
+      include: [
+        "@vue/devtools-core",
+        "@vue/devtools-kit",
+        "lucide-vue-next",
+      ],
+    },
   },
   imports: {
     dirs: ["services"],
