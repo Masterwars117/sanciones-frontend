@@ -1,1 +1,0 @@
-class o extends Error{status;data;constructor(r,t,a){super(r),this.name="ApiError",this.status=t,this.data=a}}const e=$fetch.create({baseURL:"/api"});async function i(s,r){const t=await fetch(`/api${s}`,{method:"POST",body:r}),a=await t.json();if(!t.ok)throw new o(a.error||"Error en la solicitud.",t.status,a);return a}export{e as a,i as b};
