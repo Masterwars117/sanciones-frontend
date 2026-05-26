@@ -2,7 +2,8 @@
   <div>
     <div class="head">
       <div>
-        <h1 class="title">Nuevo registro estatal</h1>
+        <h1 class="title" style="font-weight: bold; font-size: 40px;">
+    Nuevo registro estatal</h1>
         <p class="subtitle">Tabla: INHABILITADOS</p>
       </div>
 
@@ -63,14 +64,18 @@
 
               <div class="field wide">
                 <label>Dependencia / Institución</label>
-                <select v-model="form.dependencia" class="input" @change="alCambiarDependencia">
+                <select
+                  v-model="form.dependencia"
+                  class="input"
+                  @change="alCambiarDependencia"
+                >
                   <option value="">Seleccione una opción</option>
                   <option
                     v-for="item in dependenciasFiltradas"
                     :key="item.clave"
                     :value="item.clave"
                   >
-                    {{ item.clave }} - {{ item.descripcion }}
+                    {{ item.descripcion }} - {{ item.clave }}
                   </option>
                 </select>
               </div>
@@ -81,18 +86,26 @@
                   v-model="form.cve_entidad_labora"
                   class="input"
                   readonly
-                  placeholder="Se completa automáticamente"
+                  placeholder="Se completa al elegir entidad labora"
                 />
               </div>
 
               <div class="field">
                 <label>Entidad labora</label>
-                <input
-                  v-model="form.entidad_labora"
+                <select
+                  v-model="form.cve_entidad_labora"
                   class="input"
-                  readonly
-                  placeholder="Se completa automáticamente"
-                />
+                  @change="alCambiarEntidadLabora"
+                >
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in entidadesLaboraOptions"
+                    :key="`ent-${item.clave}`"
+                    :value="item.clave"
+                  >
+                    {{ item.descripcion }} - {{ item.clave }}
+                  </option>
+                </select>
               </div>
 
               <div class="field">
@@ -431,11 +444,6 @@
               </div>
 
               <div class="field">
-                <label>Fecha registro</label>
-                <input v-model="form.fechareg" type="date" class="input" />
-              </div>
-
-              <div class="field">
                 <label>Particular</label>
                 <select v-model="form.particular" class="input">
                   <option value="">Seleccione una opción</option>
@@ -532,6 +540,8 @@
 <script setup>
 import { reactive, ref, computed, onMounted } from "vue"
 import { useRouter } from "vue-router"
+import { catalogosService } from "~/services/catalogosService"
+import { estatalService } from "~/services/estatalService"
 
 definePageMeta({
   layout: "admin"
@@ -586,7 +596,6 @@ const form = reactive({
   monto1: "",
   monto2: "",
   curp: "",
-  fechareg: "",
   genero: "",
   idsesea: "",
   cve_entidad_labora: "",
@@ -643,11 +652,31 @@ function validarFormulario() {
   return true
 }
 
+function ordenarDependencias(lista = []) {
+  return [...lista].sort((a, b) => {
+    const porNombre = (a.descripcion || "").localeCompare(b.descripcion || "", "es", {
+      sensitivity: "base",
+    })
+
+    if (porNombre !== 0) return porNombre
+
+    return String(a.clave || "").localeCompare(String(b.clave || ""), "es", {
+      numeric: true,
+      sensitivity: "base",
+    })
+  })
+}
+
 const dependenciasFiltradas = computed(() => {
-  if (!tipoEntidadSancionadora.value) {
-    return catalogos.dependencias
-  }
-  return catalogos.dependencias_por_tipo?.[tipoEntidadSancionadora.value] || []
+  const base = !tipoEntidadSancionadora.value
+    ? catalogos.dependencias
+    : catalogos.dependencias_por_tipo?.[tipoEntidadSancionadora.value] || []
+
+  return ordenarDependencias(base)
+})
+
+const entidadesLaboraOptions = computed(() => {
+  return ordenarDependencias(catalogos.dependencias)
 })
 
 async function cargarCatalogos() {
@@ -680,28 +709,27 @@ function toggleTipoEntidad(valor) {
   if (tipoEntidadSancionadora.value === valor) {
     tipoEntidadSancionadora.value = ""
     form.dependencia = ""
-    form.cve_entidad_labora = ""
-    form.entidad_labora = ""
     return
   }
 
   tipoEntidadSancionadora.value = valor
   form.dependencia = ""
-  form.cve_entidad_labora = ""
-  form.entidad_labora = ""
 }
 
 function alCambiarDependencia() {
   const dep = catalogos.dependencias.find((item) => item.clave === form.dependencia)
-  if (!dep) {
-    form.cve_entidad_labora = ""
-    form.entidad_labora = ""
-    return
-  }
 
-  form.cve_entidad_labora = dep.clave
-  form.entidad_labora = dep.descripcion
+  if (!dep) return
+
   tipoEntidadSancionadora.value = String(dep.tipo)
+}
+
+function alCambiarEntidadLabora() {
+  const entidad = catalogos.dependencias.find(
+    (item) => item.clave === form.cve_entidad_labora
+  )
+
+  form.entidad_labora = entidad ? entidad.descripcion : ""
 }
 
 async function guardar() {

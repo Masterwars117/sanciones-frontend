@@ -369,14 +369,19 @@ function normalizarPorPagina(valor) {
   return props.defaultItemsPerPage
 }
 
+function normalizarSort(valor) {
+  const permitidos = ["reciente", "antiguo", "nombre_asc", "nombre_desc"]
+  return permitidos.includes(valor) ? valor : props.defaultSort
+}
+
 function cargarPreferencias() {
   if (!import.meta.client || !storagePrefix.value) return
 
-  const ordenGuardado = localStorage.getItem(`${storagePrefix.value}:orden`)
+  const sortGuardado = localStorage.getItem(`${storagePrefix.value}:sort`)
   const porPaginaGuardado = localStorage.getItem(`${storagePrefix.value}:porPagina`)
 
-  if (ordenGuardado) {
-    orden.value = ordenGuardado
+  if (sortGuardado) {
+    orden.value = normalizarSort(sortGuardado)
   }
 
   if (porPaginaGuardado) {
@@ -387,8 +392,11 @@ function cargarPreferencias() {
 function guardarPreferencias() {
   if (!import.meta.client || !storagePrefix.value) return
 
-  localStorage.setItem(`${storagePrefix.value}:orden`, orden.value)
-  localStorage.setItem(`${storagePrefix.value}:porPagina`, String(normalizarPorPagina(porPagina.value)))
+  localStorage.setItem(`${storagePrefix.value}:sort`, orden.value)
+  localStorage.setItem(
+    `${storagePrefix.value}:porPagina`,
+    String(normalizarPorPagina(porPagina.value))
+  )
 }
 
 const filasOrdenadas = computed(() => {
@@ -564,7 +572,14 @@ watch(porPagina, (nuevoValor) => {
   paginaActual.value = 1
 })
 
-watch(orden, () => {
+watch(orden, (nuevoValor) => {
+  const normalizado = normalizarSort(nuevoValor)
+
+  if (normalizado !== nuevoValor) {
+    orden.value = normalizado
+    return
+  }
+
   paginaDestino.value = ""
   limpiarSeleccion()
   guardarPreferencias()

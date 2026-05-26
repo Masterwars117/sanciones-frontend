@@ -51,7 +51,7 @@
 
               <div class="field">
                 <label>Dependencia</label>
-                <div class="value-box">{{ mostrar(form.dependencia) }}</div>
+                <div class="value-box">{{ descripcionDependencia }}</div>
               </div>
 
               <div class="field">
@@ -248,7 +248,7 @@
 
               <div class="field">
                 <label>Fecha registro</label>
-                <div class="value-box">{{ formatearFecha(form.fechareg) }}</div>
+                <div class="value-box">{{ formatearFechaHora(form.fechareg) }}</div>
               </div>
 
               <div class="field">
@@ -318,6 +318,8 @@
 <script setup>
 import { reactive, ref, computed, onMounted } from "vue"
 import { useRoute } from "vue-router"
+import { catalogosService } from "~/services/catalogosService"
+import { estatalService } from "~/services/estatalService"
 
 definePageMeta({
   layout: "admin"
@@ -404,11 +406,32 @@ function formatearFecha(value) {
   return `${dia}/${mes}/${anio}`
 }
 
+function formatearFechaHora(value) {
+  if (!value) return "-"
+  const fecha = new Date(value)
+  if (Number.isNaN(fecha.getTime())) return value
+
+  const dia = String(fecha.getDate()).padStart(2, "0")
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0")
+  const anio = fecha.getFullYear()
+  const horas = String(fecha.getHours()).padStart(2, "0")
+  const minutos = String(fecha.getMinutes()).padStart(2, "0")
+  return `${dia}/${mes}/${anio} ${horas}:${minutos}`
+}
+
 function buscarDescripcion(lista, clave, campoDescripcion = "descripcion") {
   if (!clave) return "-"
   const item = lista.find((x) => String(x.clave) === String(clave))
   return item ? `${item.clave} - ${item[campoDescripcion]}` : String(clave)
 }
+
+const descripcionDependencia = computed(() => {
+  if (!form.dependencia) return "-"
+  const item = catalogos.dependencias.find(
+    (x) => String(x.clave) === String(form.dependencia)
+  )
+  return item ? `${item.descripcion} - ${item.clave}` : String(form.dependencia)
+})
 
 const descripcionGenero = computed(() =>
   buscarDescripcion(catalogos.generos, form.genero)
@@ -503,7 +526,6 @@ async function cargarDetalle() {
 
   try {
     const res = await estatalService.obtenerDetalle(anio, sancionid)
-
     const reg = res.registro || {}
     Object.assign(form, reg)
   } catch (e) {

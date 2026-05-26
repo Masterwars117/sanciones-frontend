@@ -61,14 +61,18 @@
 
               <div class="field wide">
                 <label>Dependencia / Institución</label>
-                <select v-model="form.dependencia" class="input" @change="alCambiarDependencia">
+                <select
+                  v-model="form.dependencia"
+                  class="input"
+                  @change="alCambiarDependencia"
+                >
                   <option value="">Seleccione una opción</option>
                   <option
                     v-for="item in dependenciasFiltradas"
                     :key="item.clave"
                     :value="item.clave"
                   >
-                    {{ item.clave }} - {{ item.descripcion }}
+                    {{ item.descripcion }} - {{ item.clave }}
                   </option>
                 </select>
               </div>
@@ -79,18 +83,26 @@
                   v-model="form.cve_entidad_labora"
                   class="input"
                   readonly
-                  placeholder="Se completa automáticamente"
+                  placeholder="Se completa al elegir entidad labora"
                 />
               </div>
 
               <div class="field">
                 <label>Entidad labora</label>
-                <input
-                  v-model="form.entidad_labora"
+                <select
+                  v-model="form.cve_entidad_labora"
                   class="input"
-                  readonly
-                  placeholder="Se completa automáticamente"
-                />
+                  @change="alCambiarEntidadLabora"
+                >
+                  <option value="">Seleccione una opción</option>
+                  <option
+                    v-for="item in entidadesLaboraOptions"
+                    :key="`ent-${item.clave}`"
+                    :value="item.clave"
+                  >
+                    {{ item.descripcion }} - {{ item.clave }}
+                  </option>
+                </select>
               </div>
 
               <div class="field">
@@ -430,7 +442,12 @@
 
               <div class="field">
                 <label>Fecha registro</label>
-                <input v-model="form.fechareg" type="date" class="input" />
+                <input
+                  :value="formatearFechaHora(form.fechareg)"
+                  class="input input-disabled"
+                  readonly
+                  disabled
+                />
               </div>
 
               <div class="field">
@@ -530,6 +547,8 @@
 <script setup>
 import { reactive, ref, computed, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
+import { catalogosService } from "~/services/catalogosService"
+import { estatalService } from "~/services/estatalService"
 
 definePageMeta({
   layout: "admin"
@@ -645,11 +664,45 @@ function validarFormulario() {
   return true
 }
 
+function ordenarDependencias(lista = []) {
+  return [...lista].sort((a, b) => {
+    const porNombre = (a.descripcion || "").localeCompare(b.descripcion || "", "es", {
+      sensitivity: "base",
+    })
+
+    if (porNombre !== 0) return porNombre
+
+    return String(a.clave || "").localeCompare(String(b.clave || ""), "es", {
+      numeric: true,
+      sensitivity: "base",
+    })
+  })
+}
+
+function formatearFechaHora(value) {
+  if (!value) return "-"
+
+  const fecha = new Date(value)
+  if (Number.isNaN(fecha.getTime())) return value
+
+  const dia = String(fecha.getDate()).padStart(2, "0")
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0")
+  const anio = fecha.getFullYear()
+  const horas = String(fecha.getHours()).padStart(2, "0")
+  const minutos = String(fecha.getMinutes()).padStart(2, "0")
+  return `${dia}/${mes}/${anio} ${horas}:${minutos}`
+}
+
 const dependenciasFiltradas = computed(() => {
-  if (!tipoEntidadSancionadora.value) {
-    return catalogos.dependencias
-  }
-  return catalogos.dependencias_por_tipo?.[tipoEntidadSancionadora.value] || []
+  const base = !tipoEntidadSancionadora.value
+    ? catalogos.dependencias
+    : catalogos.dependencias_por_tipo?.[tipoEntidadSancionadora.value] || []
+
+  return ordenarDependencias(base)
+})
+
+const entidadesLaboraOptions = computed(() => {
+  return ordenarDependencias(catalogos.dependencias)
 })
 
 async function cargarCatalogos() {
@@ -682,37 +735,42 @@ function toggleTipoEntidad(valor) {
   if (tipoEntidadSancionadora.value === valor) {
     tipoEntidadSancionadora.value = ""
     form.dependencia = ""
-    form.cve_entidad_labora = ""
-    form.entidad_labora = ""
     return
   }
 
   tipoEntidadSancionadora.value = valor
   form.dependencia = ""
-  form.cve_entidad_labora = ""
-  form.entidad_labora = ""
 }
 
 function alCambiarDependencia() {
   const dep = catalogos.dependencias.find((item) => item.clave === form.dependencia)
-  if (!dep) {
-    form.cve_entidad_labora = ""
-    form.entidad_labora = ""
-    return
-  }
 
-  form.cve_entidad_labora = dep.clave
-  form.entidad_labora = dep.descripcion
+  if (!dep) return
+
   tipoEntidadSancionadora.value = String(dep.tipo)
+}
+
+function alCambiarEntidadLabora() {
+  const entidad = catalogos.dependencias.find(
+    (item) => item.clave === form.cve_entidad_labora
+  )
+
+  form.entidad_labora = entidad ? entidad.descripcion : ""
 }
 
 function sincronizarDependenciaActual() {
   const dep = catalogos.dependencias.find((item) => item.clave === form.dependencia)
-  if (!dep) return
+  if (dep) {
+    tipoEntidadSancionadora.value = String(dep.tipo)
+  }
 
-  form.cve_entidad_labora = dep.clave
-  form.entidad_labora = dep.descripcion
-  tipoEntidadSancionadora.value = String(dep.tipo)
+  const entidad = catalogos.dependencias.find(
+    (item) => item.clave === form.cve_entidad_labora
+  )
+
+  if (entidad) {
+    form.entidad_labora = entidad.descripcion
+  }
 }
 
 async function cargarDetalle() {
@@ -753,10 +811,13 @@ async function guardar() {
   guardando.value = true
 
   try {
+    const payload = { ...form }
+    delete payload.fechareg
+
     const res = await estatalService.editar({
       anio_original: anioOriginal.value,
       sancionid_original: sancionidOriginal.value,
-      ...form
+      ...payload
     })
 
     mensaje.value = res.message || "Registro actualizado correctamente."

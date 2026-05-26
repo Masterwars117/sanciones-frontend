@@ -1,6 +1,7 @@
 import tailwindcss from "@tailwindcss/vite"
 
 export default defineNuxtConfig({
+  
   css: ["~/assets/css/gob-theme.css"],
   vite: {
     plugins: [tailwindcss()],
