@@ -2,25 +2,13 @@
   <div>
     <div class="head">
       <div>
-        <h1 class="title">Sanciones Federales</h1>
+        <h1 class="title" style="font-weight: bold; font-size: 40px;"> Sanciones Federales </h1>
         <p class="subtitle">Tabla: INHABILIFEDERAL</p>
       </div>
 
-      <div class="head-actions">
-        <label class="btn-upload">
-          Cargar Excel
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            class="hidden-file"
-            @change="subirExcel"
-          />
-        </label>
-
-        <NuxtLink to="/admin/federal/nuevo" class="btn-primary">
-          Nuevo registro federal
-        </NuxtLink>
-      </div>
+      <NuxtLink to="/admin/federal/nuevo" class="btn-primary">
+        Nuevo registro federal
+      </NuxtLink>
     </div>
 
     <div class="card">
@@ -29,22 +17,12 @@
           v-model="busqueda"
           type="text"
           class="input search-input"
-          placeholder="Buscar por nombre, RFC, dependencia o cargo"
-          @keyup.enter="cargarRegistros"
+          placeholder="Buscar por RFC, nombre, dependencia o cargo"
+          @keyup.enter="cargarRegistros({ resetPage: true })"
         />
-        <button class="btn-dark" @click="cargarRegistros">Buscar</button>
-      </div>
-
-      <div v-if="subiendo" class="info-box">
-        Cargando archivo Excel...
-      </div>
-
-      <div v-if="mensajeCarga" class="ok-box">
-        {{ mensajeCarga }}
-      </div>
-
-      <div v-if="error" class="error-box">
-        {{ error }}
+        <button class="btn-dark" @click="cargarRegistros({ resetPage: true })">
+          Buscar
+        </button>
       </div>
 
       <TablaPaginada
@@ -76,9 +54,11 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from "vue"
+import { ref, watch, computed, onMounted, onBeforeUnmount } from "vue"
 import { useRouter } from "vue-router"
 import Swal from "sweetalert2"
+import { sancionadosService } from "~/services/sancionadosService"
+import { federalService } from "~/services/federalService"
 
 definePageMeta({
   layout: "admin"
@@ -98,7 +78,9 @@ const totalPaginas = ref(1)
 const tieneSiguiente = ref(false)
 const tieneAnterior = ref(false)
 const itemsPorPagina = ref(50)
-const subiendo = ref(false)
+const sortOrden = ref("reciente")
+
+let debounceTimer = null
 
 function normalizarPageSize(valor) {
   const numero = Math.min(MAX_PAGE_SIZE, Math.max(1, Number(valor)))
@@ -110,6 +92,11 @@ function normalizarPageSize(valor) {
   return 50
 }
 
+function normalizarSort(valor) {
+  const permitidos = ["reciente", "antiguo", "nombre_asc", "nombre_desc"]
+  return permitidos.includes(valor) ? valor : "reciente"
+}
+
 function cargarPageSizeGuardado() {
   if (!import.meta.client) return 50
 
@@ -118,10 +105,15 @@ function cargarPageSizeGuardado() {
 
   return normalizarPageSize(guardado)
 }
-const error = ref("")
-const mensajeCarga = ref("")
 
-let debounceTimer = null
+function cargarSortGuardado() {
+  if (!import.meta.client) return "reciente"
+
+  const guardado = localStorage.getItem(`tabla-paginada:${STORAGE_KEY}:sort`)
+  if (!guardado) return "reciente"
+
+  return normalizarSort(guardado)
+}
 
 function limpiarDebounce() {
   if (debounceTimer) {
@@ -130,31 +122,8 @@ function limpiarDebounce() {
   }
 }
 
-function limpiarMensajes() {
-  error.value = ""
-  mensajeCarga.value = ""
-}
-
-function mostrarError(texto) {
-  Swal.fire({
-    icon: "error",
-    title: "Error",
-    text: texto,
-    confirmButtonColor: "#8e1738"
-  })
-}
-
-function mostrarExito(texto) {
-  Swal.fire({
-    icon: "success",
-    title: "Correcto",
-    text: texto,
-    confirmButtonColor: "#8e1738"
-  })
-}
-
 function getItemKey(item) {
-  return item.rfc || ""
+  return `${item.rfc}-${item.homoclave || ""}`
 }
 
 function nombreCompleto(item) {
@@ -179,8 +148,8 @@ function formatearFecha(value) {
   return `${dia}/${mes}/${anio}`
 }
 
-const columnas = [
-  { key: "rfc", label: "RFC", class: "col-md" },
+const columnas = computed(() => [
+  { key: "rfc", label: "RFC base", class: "col-md" },
   { key: "homoclave", label: "Homoclave", class: "col-sm" },
   {
     key: "nombre",
@@ -189,7 +158,6 @@ const columnas = [
     format: (row) => nombreCompleto(row) || "-"
   },
   { key: "dependencia", label: "Dependencia", class: "col-lg" },
-  { key: "autsanc", label: "Autoridad sancionadora", class: "col-lg" },
   { key: "cargo", label: "Cargo", class: "col-lg" },
   { key: "periodo", label: "Periodo", class: "col-md" },
   {
@@ -198,11 +166,28 @@ const columnas = [
     class: "col-md",
     format: (row) => formatearFecha(row.fechares)
   }
-]
+])
+
+function mostrarError(texto) {
+  Swal.fire({
+    icon: "error",
+    title: "Error",
+    text: texto,
+    confirmButtonColor: "#8e1738"
+  })
+}
+
+function mostrarExito(texto) {
+  Swal.fire({
+    icon: "success",
+    title: "Correcto",
+    text: texto,
+    confirmButtonColor: "#8e1738"
+  })
+}
 
 async function cargarRegistros(opciones = {}) {
   limpiarDebounce()
-  error.value = ""
 
   if (opciones.resetPage) {
     pagina.value = 1
@@ -216,13 +201,18 @@ async function cargarRegistros(opciones = {}) {
     itemsPorPagina.value = normalizarPageSize(opciones.pageSize)
   }
 
+  if (typeof opciones.sort === "string") {
+    sortOrden.value = normalizarSort(opciones.sort)
+  }
+
   cargando.value = true
 
   try {
     const res = await sancionadosService.listarFederales({
       q: busqueda.value.trim() || undefined,
       page: pagina.value,
-      page_size: itemsPorPagina.value
+      page_size: itemsPorPagina.value,
+      sort: sortOrden.value
     })
 
     registros.value = res.results || []
@@ -235,7 +225,6 @@ async function cargarRegistros(opciones = {}) {
       itemsPorPagina.value = normalizarPageSize(res.page_size)
     }
   } catch (e) {
-    error.value = "No se pudieron cargar los registros federales."
     registros.value = []
     pagina.value = 1
     totalPaginas.value = 1
@@ -247,8 +236,12 @@ async function cargarRegistros(opciones = {}) {
   }
 }
 
-function onPageChange({ page, pageSize }) {
-  cargarRegistros({ page, pageSize })
+function onPageChange(payload) {
+  cargarRegistros({
+    page: payload?.page,
+    pageSize: payload?.pageSize,
+    sort: payload?.sort
+  })
 }
 
 watch(busqueda, (nuevoValor, valorAnterior) => {
@@ -266,17 +259,17 @@ watch(busqueda, (nuevoValor, valorAnterior) => {
 
 function verSeleccionado(item) {
   if (!item) return
+
   router.push(`/admin/federal/ver?rfc=${encodeURIComponent(item.rfc)}`)
 }
 
 function editarSeleccionado(item) {
   if (!item) return
+
   router.push(`/admin/federal/editar?rfc=${encodeURIComponent(item.rfc)}`)
 }
 
 async function eliminarSeleccionados(items) {
-  limpiarMensajes()
-
   if (!items?.length) return
 
   const texto =
@@ -304,49 +297,19 @@ async function eliminarSeleccionados(items) {
 
     await cargarRegistros()
 
-    const textoExito =
+    mostrarExito(
       items.length === 1
         ? "Registro eliminado correctamente."
         : "Registros eliminados correctamente."
-
-    mensajeCarga.value = textoExito
-    mostrarExito(textoExito)
+    )
   } catch (e) {
-    const textoError = e?.data?.error || "No se pudo eliminar uno o más registros."
-    error.value = textoError
-    mostrarError(textoError)
-  }
-}
-
-async function subirExcel(event) {
-  error.value = ""
-  mensajeCarga.value = ""
-
-  const file = event.target.files?.[0]
-  if (!file) return
-
-  subiendo.value = true
-
-  try {
-    const data = await federalService.cargarExcel(file)
-
-    await cargarRegistros()
-
-    const textoExito = `Carga completada. Insertados: ${data.insertados || 0}. Duplicados: ${data.duplicados || 0}. Omitidos: ${data.omitidos || 0}.`
-    mensajeCarga.value = textoExito
-    mostrarExito(textoExito)
-  } catch (e) {
-    const textoError = e.message || "No se pudo cargar el archivo Excel."
-    error.value = textoError
-    mostrarError(textoError)
-  } finally {
-    subiendo.value = false
-    event.target.value = ""
+    mostrarError(e?.data?.error || "No se pudo eliminar uno o más registros.")
   }
 }
 
 onMounted(async () => {
   itemsPorPagina.value = cargarPageSizeGuardado()
+  sortOrden.value = cargarSortGuardado()
   await cargarRegistros()
 })
 
@@ -362,13 +325,6 @@ onBeforeUnmount(() => {
   align-items: center;
   margin-bottom: 18px;
   gap: 16px;
-}
-
-.head-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
 }
 
 .title {
@@ -406,8 +362,7 @@ onBeforeUnmount(() => {
   background: white;
 }
 
-.btn-primary,
-.btn-upload {
+.btn-primary {
   border: none;
   background: #8e1738;
   color: white;
@@ -415,17 +370,7 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   cursor: pointer;
   text-decoration: none;
-  display: inline-flex;
-  align-items: center;
   white-space: nowrap;
-}
-
-.btn-upload {
-  background: #444;
-}
-
-.hidden-file {
-  display: none;
 }
 
 .btn-dark {
@@ -438,29 +383,10 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
-.info-box {
-  margin-bottom: 12px;
-  color: #444;
-}
-
-.ok-box {
-  margin-bottom: 12px;
-  color: #0a7a2f;
-}
-
-.error-box {
-  margin-bottom: 12px;
-  color: #b00020;
-}
-
 @media (max-width: 980px) {
   .head {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .head-actions {
-    justify-content: flex-start;
   }
 
   .search-row {

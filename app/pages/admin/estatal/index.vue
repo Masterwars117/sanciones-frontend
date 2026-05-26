@@ -2,7 +2,7 @@
   <div>
     <div class="head">
       <div>
-        <h1 class="title">Sanciones Estatales</h1>
+        <h1 class="title" style="font-weight: bold; font-size: 40px;">Sanciones Estatales</h1>
         <p class="subtitle">Tabla: INHABILITADOS</p>
       </div>
 
@@ -18,9 +18,11 @@
           type="text"
           class="input search-input"
           placeholder="Buscar por expediente, nombre, RFC o CURP"
-          @keyup.enter="cargarRegistros"
+          @keyup.enter="cargarRegistros({ resetPage: true })"
         />
-        <button class="btn-dark" @click="cargarRegistros">Buscar</button>
+        <button class="btn-dark" @click="cargarRegistros({ resetPage: true })">
+          Buscar
+        </button>
       </div>
 
       <TablaPaginada
@@ -52,9 +54,12 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from "vue"
+import { ref, watch, computed, onMounted, onBeforeUnmount } from "vue"
 import { useRouter } from "vue-router"
 import Swal from "sweetalert2"
+import { sancionadosService } from "~/services/sancionadosService"
+import { catalogosService } from "~/services/catalogosService"
+import { estatalService } from "~/services/estatalService"
 
 definePageMeta({
   layout: "admin"
@@ -68,12 +73,14 @@ const STORAGE_KEY = "estatal"
 
 const busqueda = ref("")
 const registros = ref([])
+const dependenciasCatalogo = ref([])
 const cargando = ref(false)
 const pagina = ref(1)
 const totalPaginas = ref(1)
 const tieneSiguiente = ref(false)
 const tieneAnterior = ref(false)
 const itemsPorPagina = ref(50)
+const sortOrden = ref("reciente")
 
 let debounceTimer = null
 
@@ -87,6 +94,11 @@ function normalizarPageSize(valor) {
   return 50
 }
 
+function normalizarSort(valor) {
+  const permitidos = ["reciente", "antiguo", "nombre_asc", "nombre_desc"]
+  return permitidos.includes(valor) ? valor : "reciente"
+}
+
 function cargarPageSizeGuardado() {
   if (!import.meta.client) return 50
 
@@ -94,6 +106,15 @@ function cargarPageSizeGuardado() {
   if (!guardado) return 50
 
   return normalizarPageSize(guardado)
+}
+
+function cargarSortGuardado() {
+  if (!import.meta.client) return "reciente"
+
+  const guardado = localStorage.getItem(`tabla-paginada:${STORAGE_KEY}:sort`)
+  if (!guardado) return "reciente"
+
+  return normalizarSort(guardado)
 }
 
 function limpiarDebounce() {
@@ -118,7 +139,7 @@ function obtenerFechaOrden(item) {
   return item?.fechareg || null
 }
 
-function formatearFecha(value) {
+function formatearFechaHora(value) {
   if (!value) return "-"
   const fecha = new Date(value)
   if (Number.isNaN(fecha.getTime())) return value
@@ -126,10 +147,21 @@ function formatearFecha(value) {
   const dia = String(fecha.getDate()).padStart(2, "0")
   const mes = String(fecha.getMonth() + 1).padStart(2, "0")
   const anio = fecha.getFullYear()
-  return `${dia}/${mes}/${anio}`
+  const horas = String(fecha.getHours()).padStart(2, "0")
+  const minutos = String(fecha.getMinutes()).padStart(2, "0")
+  return `${dia}/${mes}/${anio} ${horas}:${minutos}`
 }
 
-const columnas = [
+const mapaDependencias = computed(() => {
+  return Object.fromEntries(
+    (dependenciasCatalogo.value || []).map((item) => [
+      String(item.clave),
+      item.descripcion,
+    ])
+  )
+})
+
+const columnas = computed(() => [
   { key: "anio", label: "Año", class: "col-sm" },
   { key: "sancionid", label: "Sanción ID", class: "col-sm" },
   { key: "expediente", label: "Expediente", class: "col-md" },
@@ -142,14 +174,20 @@ const columnas = [
   { key: "rfc", label: "RFC", class: "col-md" },
   { key: "curp", label: "CURP", class: "col-lg" },
   { key: "cargo", label: "Cargo", class: "col-lg" },
-  { key: "dependencia", label: "Dependencia", class: "col-md" },
+  {
+    key: "dependencia",
+    label: "Dependencia",
+    class: "col-lg",
+    format: (row) =>
+      mapaDependencias.value[String(row.dependencia)] || row.dependencia || "-"
+  },
   {
     key: "fechareg",
     label: "Fecha registro",
-    class: "col-md",
-    format: (row) => formatearFecha(row.fechareg)
+    class: "col-lg",
+    format: (row) => formatearFechaHora(row.fechareg)
   }
-]
+])
 
 function mostrarError(texto) {
   Swal.fire({
@@ -169,6 +207,15 @@ function mostrarExito(texto) {
   })
 }
 
+async function cargarCatalogoDependencias() {
+  try {
+    const res = await catalogosService.obtenerEstatales()
+    dependenciasCatalogo.value = res.catalogos?.dependencias || []
+  } catch {
+    dependenciasCatalogo.value = []
+  }
+}
+
 async function cargarRegistros(opciones = {}) {
   limpiarDebounce()
 
@@ -184,13 +231,18 @@ async function cargarRegistros(opciones = {}) {
     itemsPorPagina.value = normalizarPageSize(opciones.pageSize)
   }
 
+  if (typeof opciones.sort === "string") {
+    sortOrden.value = normalizarSort(opciones.sort)
+  }
+
   cargando.value = true
 
   try {
     const res = await sancionadosService.listarEstatales({
       q: busqueda.value.trim() || undefined,
       page: pagina.value,
-      page_size: itemsPorPagina.value
+      page_size: itemsPorPagina.value,
+      sort: sortOrden.value
     })
 
     registros.value = res.results || []
@@ -214,8 +266,12 @@ async function cargarRegistros(opciones = {}) {
   }
 }
 
-function onPageChange({ page, pageSize }) {
-  cargarRegistros({ page, pageSize })
+function onPageChange(payload) {
+  cargarRegistros({
+    page: payload?.page,
+    pageSize: payload?.pageSize,
+    sort: payload?.sort
+  })
 }
 
 watch(busqueda, (nuevoValor, valorAnterior) => {
@@ -287,6 +343,8 @@ async function eliminarSeleccionados(items) {
 
 onMounted(async () => {
   itemsPorPagina.value = cargarPageSizeGuardado()
+  sortOrden.value = cargarSortGuardado()
+  await cargarCatalogoDependencias()
   await cargarRegistros()
 })
 

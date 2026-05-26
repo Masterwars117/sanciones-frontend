@@ -1,159 +1,173 @@
 <template>
-  <footer class="footer-gob text-white">
-    <div class="mx-auto max-w-7xl px-4 py-12">
+  <footer id="contacto" class="mt-auto bg-[#BC955C] text-white">
+    <div class="mx-auto max-w-7xl px-4 py-10">
       <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <!-- Marca -->
         <div class="space-y-4">
-          <div class="flex items-center gap-3">
-            <div class="flex h-12 w-12 items-center justify-center rounded border border-white">
-              <svg viewBox="0 0 40 40" class="h-8 w-8 text-white" fill="currentColor">
-                <path d="M20 4L4 12v16l16 8 16-8V12L20 4zm0 4l12 6v12l-12 6-12-6V14l12-6z" />
-                <circle cx="20" cy="20" r="6" fill="currentColor" />
-              </svg>
+          <div class="flex items-start gap-4">
+            <div class="footer-logo-wrap">
+              <img
+                src="/images/logo-gobmx.png"
+                alt="Logo gob.mx"
+                class="footer-logo"
+              />
             </div>
-            <div>
-              <span class="block text-xl font-bold">TABASCO</span>
-              <span class="block text-xs">.gob.mx</span>
+
+            <div class="leading-tight">
+              <div class="text-3xl font-bold uppercase tracking-tight">TABASCO</div>
+              <div class="text-sm text-white/90">.gob.mx</div>
             </div>
           </div>
-          <p class="text-sm leading-relaxed">
-            Secretaría de la Función Pública del Gobierno del Estado de Tabasco.
-            Comprometidos con la transparencia y el combate a la corrupción.
+
+          <p class="max-w-xs text-sm leading-7 text-white/95">
+            Secretaría Anticorrupción y Buen Gobierno del Gobierno del Estado de Tabasco.
+            Portal de consulta pública orientado a la transparencia, integridad y control administrativo.
           </p>
         </div>
 
-        <div id="contacto" class="space-y-4">
-          <h3 class="text-lg font-semibold">Contacto</h3>
-          <ul class="space-y-3 text-sm">
-            <li class="flex items-start gap-3">
-              <MapPin class="mt-0.5 h-4 w-4 shrink-0" />
-              <span>Av. Paseo Tabasco #1504 Col. Tabasco 2000, C.P. 86035, Villahermosa, Tabasco, MX</span>
-            </li>
-            <li class="flex items-center gap-3">
-              <Phone class="h-4 w-4 shrink-0" />
-              <span>+52 (993) 3 10 47 80 Ext. 5090</span>
-            </li>
-            <li class="flex items-center gap-3">
-              <Mail class="h-4 w-4 shrink-0" />
-              <a href="mailto:contacto@tabasco.gob.mx" class="hover:underline">
-                contacto@tabasco.gob.mx
-              </a>
-            </li>
-          </ul>
+        <!-- Contacto -->
+        <div>
+          <h4 class="mb-4 text-xl font-bold">Contacto</h4>
+
+          <div class="space-y-3 text-sm leading-7 text-white/95">
+            <p>Av. Paseo Tabasco #1504 Col. Tabasco 2000, C.P. 86035, Villahermosa, Tabasco, MX</p>
+            <p>+52 (993) 3 10 47 80 Ext. 5090</p>
+            <a
+              href="mailto:contacto@tabasco.gob.mx"
+              class="inline-block transition hover:text-[#235B4E]"
+            >
+              contacto@tabasco.gob.mx
+            </a>
+          </div>
         </div>
 
-        <div id="transparencia" class="space-y-4">
-          <h3 class="text-lg font-semibold">Transparencia</h3>
-          <ul class="space-y-2 text-sm">
-            <li>
-              <a
-                href="https://transparencia.tabasco.gob.mx/"
-                class="flex items-center gap-2 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Portal de Transparencia
-                <ExternalLink class="h-3 w-3" />
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://itaip.org.mx/"
-                class="flex items-center gap-2 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                ITAIP
-                <ExternalLink class="h-3 w-3" />
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://www.infomextabasco.org.mx/"
-                class="flex items-center gap-2 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Infomex
-                <ExternalLink class="h-3 w-3" />
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://portalanticorrupcion.tabasco.gob.mx:85/aviso-de-privacidad"
-                class="flex items-center gap-2 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Aviso de Privacidad
-                <ExternalLink class="h-3 w-3" />
-              </a>
-            </li>
-          </ul>
+        <!-- Transparencia -->
+        <div>
+          <h4 class="mb-4 text-xl font-bold">Transparencia</h4>
+
+          <div class="flex flex-col gap-3 text-sm">
+            <a
+              href="https://transparencia.tabasco.gob.mx/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="footer-link"
+            >
+              Portal de Transparencia
+            </a>
+
+            <a
+              href="https://itaip.org.mx/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="footer-link"
+            >
+              ITAIP
+            </a>
+
+            <a
+              href="https://www.infomextabasco.org.mx/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="footer-link"
+            >
+              Infomex
+            </a>
+
+            <a
+              href="https://portalanticorrupcion.tabasco.gob.mx:85/aviso-de-privacidad"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="footer-link"
+            >
+              Aviso de Privacidad
+            </a>
+          </div>
         </div>
 
-        <div class="space-y-4">
-          <h3 class="text-lg font-semibold">Enlaces Rápidos</h3>
-          <ul class="space-y-2 text-sm">
-            <li>
-              <a
-                href="https://www.gob.mx"
-                class="flex items-center gap-2 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                gob.mx
-                <ExternalLink class="h-3 w-3" />
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://www.gob.mx/curp/"
-                class="flex items-center gap-2 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Consulta tu CURP
-                <ExternalLink class="h-3 w-3" />
-              </a>
-            </li>
-            <li>
-              <a
-                href="https://twitter.com/Gobierno_Tab"
-                class="flex items-center gap-2 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Twitter @Gobierno_Tab
-                <ExternalLink class="h-3 w-3" />
-              </a>
-            </li>
-          </ul>
+        <!-- Enlaces rápidos -->
+        <div>
+          <h4 class="mb-4 text-xl font-bold">Enlaces Rápidos</h4>
+
+          <div class="flex flex-col gap-3 text-sm">
+            <a
+              href="https://www.gob.mx/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="footer-link"
+            >
+              gob.mx
+            </a>
+
+            <a
+              href="https://www.gob.mx/curp/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="footer-link"
+            >
+              Consulta tu CURP
+            </a>
+
+            <a
+              href="https://twitter.com/Gobierno_Tab"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="footer-link"
+            >
+              Twitter @Gobierno_Tab
+            </a>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="border-t border-white">
-      <div class="mx-auto max-w-7xl px-4 py-4">
-        <div class="flex flex-col items-center justify-between gap-4 text-center text-xs sm:flex-row sm:text-left">
-          <p>{{ year }} Gobierno del Estado de Tabasco. Todos los derechos reservados.</p>
-          <div class="flex gap-4">
-            <span>Secretaría de la Función Pública</span>
-            <span>Unidad de Apoyo Técnico e Informático</span>
-          </div>
+    <div class="border-t border-white/15 bg-[#b58d54]">
+      <div class="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 text-xs text-white/95 md:flex-row md:items-center md:justify-between">
+        <span>GOBIERNO DEL ESTADO DE TABASCO © DERECHOS RESERVADOS</span>
+        <div class="flex flex-col md:flex-row md:gap-6">
+          <span>SECRETARÍA ANTICORRUPCIÓN Y BUEN GOBIERNO</span>
+          <span>UNIDAD DE APOYO TÉCNICO E INFORMÁTICO</span>
         </div>
       </div>
     </div>
   </footer>
 </template>
 
-<script setup>
-import { Phone, Mail, MapPin, ExternalLink } from "lucide-vue-next"
-
-const year = new Date().getFullYear()
-</script>
-
 <style scoped>
-.footer-gob {
-  background-color: #BC955C;
+.footer-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 132px;
+  height: 76px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #eadbbd 0%, #d8c19a 100%);
+  box-shadow: inset 0 0 0 1px rgba(105, 28, 50, 0.08);
+  flex-shrink: 0;
+}
+
+.footer-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.footer-link {
+  color: rgba(255, 255, 255, 0.96);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.footer-link:hover {
+  color: #235b4e;
+}
+
+@media (max-width: 640px) {
+  .footer-logo-wrap {
+    width: 112px;
+    height: 66px;
+    padding: 6px 8px;
+  }
 }
 </style>

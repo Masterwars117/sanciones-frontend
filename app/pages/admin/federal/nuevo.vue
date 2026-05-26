@@ -2,7 +2,7 @@
   <div>
     <div class="head">
       <div>
-        <h1 class="title">Nuevo registro federal</h1>
+        <h1 class="title" style="font-weight: bold; font-size: 40px;">Nuevo registro federal</h1>
         <p class="subtitle">Tabla: INHABILIFEDERAL</p>
       </div>
 

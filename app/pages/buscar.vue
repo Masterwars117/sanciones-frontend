@@ -9,13 +9,17 @@
           <div class="mx-auto max-w-3xl text-center">
             <div class="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm">
               <Shield class="h-4 w-4" />
-              Sistema de Consulta Oficial
+              Consulta Pública Oficial
             </div>
+
             <h1 class="text-balance text-2xl font-bold tracking-tight md:text-3xl lg:text-4xl">
               Servidores Públicos y Particulares Sancionados
             </h1>
+
             <p class="mt-4 text-pretty text-base leading-relaxed text-white/90 md:text-lg">
-              En términos de lo previsto por los artículos 27, 77 y 80 de la Ley General de Responsabilidades Administrativas
+              Sistema de consulta pública de la
+              <span class="font-semibold text-white">Secretaría Anticorrupción y Buen Gobierno</span>
+              del Estado de Tabasco, en términos de lo previsto por los artículos 27, 77 y 80 de la Ley General de Responsabilidades Administrativas.
             </p>
           </div>
         </div>
@@ -48,7 +52,10 @@
             @clear="onClear"
           />
 
-          <div v-if="buscado && sinResultados" class="mt-8 rounded-lg border border-[#9F2241]/20 bg-[#9F2241]/5 px-6 py-4 text-center font-medium text-[#9F2241]">
+          <div
+            v-if="buscado && sinResultados"
+            class="mt-8 rounded-lg border border-[#9F2241]/20 bg-[#9F2241]/5 px-6 py-4 text-center font-medium text-[#9F2241]"
+          >
             Sin resultados que mostrar
           </div>
 
@@ -153,6 +160,7 @@
 import { computed, ref, watch, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { Shield } from "lucide-vue-next"
+import { buscarService } from "~/services/buscarService"
 
 definePageMeta({
   layout: "landing",
