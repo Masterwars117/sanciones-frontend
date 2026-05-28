@@ -18,17 +18,9 @@ export default defineNuxtConfig({
     dirs: ["services"],
   },
   runtimeConfig: {
+    apiBackendUrl: process.env.NUXT_API_BACKEND_URL || 'http://localhost:9099/api',
     public: {
-      apiUrl: process.env.NUXT_API_URL || '',
-      oauthClientId: process.env.NUXT_OAUTH_CLIENT_ID || '',
-      oauthRedirectUri: process.env.VITE_OAUTH_REDIRECT_URI || '',
-      oauthBaseUrl: process.env.VITE_OAUTH_BASE_URL || '',
-      oauthAuthUrl: process.env.VITE_OAUTH_AUTH_URL || '',
-      oauthTokenUrl: process.env.VITE_OAUTH_TOKEN_URL || '',
-      oauthRevokeUrl: process.env.VITE_OAUTH_REVOKE_URL || '',
-      oauthScope: process.env.VITE_OAUTH_SCOPE || '',
-      appName: process.env.VITE_APP_NAME || 'Gestión Documental | SABG',
-      appVersion: process.env.VITE_APP_VERSION || '1.0.0',
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
     },
   },
 })
