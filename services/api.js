@@ -5,9 +5,9 @@
 
 import axios from 'axios'
 
-// Configuración base de Axios
+// baseURL se configura en plugins/api.client.js vía useRuntimeConfig()
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+  baseURL: '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

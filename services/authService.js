@@ -9,14 +9,37 @@ import SHA256 from 'crypto-js/sha256'
 import Base64 from 'crypto-js/enc-base64'
 
 class AuthService {
-  constructor() {
-    this.clientId = import.meta.env.VITE_OAUTH_CLIENT_ID
-    this.redirectUri =
-      import.meta.env.VITE_OAUTH_REDIRECT_URI || `${window.location.origin}/auth/callback`
-    this.authUrl = import.meta.env.VITE_OAUTH_AUTH_URL
-    this.tokenUrl = import.meta.env.VITE_OAUTH_TOKEN_URL
-    this.revokeUrl = import.meta.env.VITE_OAUTH_REVOKE_URL
-    this.scope = import.meta.env.VITE_OAUTH_SCOPE || 'read:user'
+  get _public() {
+    return useRuntimeConfig().public
+  }
+
+  get clientId() {
+    return this._public.oauthClientId
+  }
+
+  get redirectUri() {
+    return this._public.oauthRedirectUri || `${window.location.origin}/auth/callback`
+  }
+
+  get authUrl() {
+    return this._public.oauthAuthUrl
+  }
+
+  get tokenUrl() {
+    return this._public.oauthTokenUrl
+  }
+
+  get revokeUrl() {
+    return this._public.oauthRevokeUrl
+  }
+
+  get scope() {
+    return this._public.oauthScope || 'read:user'
+  }
+
+  get debugMode() {
+    const value = this._public.debugMode
+    return value === true || value === 'true'
   }
 
   /**
@@ -35,7 +58,7 @@ class AuthService {
    * Genera el code_challenge para PKCE
    */
   async generateCodeChallenge(codeVerifier) {
-    if (import.meta.env.VITE_DEBUG_MODE === 'true') {
+    if (this.debugMode) {
       // Usar crypto-js en modo debug para evitar problemas con HTTPS
       const hash = SHA256(codeVerifier)
       const base64 = Base64.stringify(hash)

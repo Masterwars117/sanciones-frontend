@@ -22,6 +22,7 @@
     "@mdi/font": "^7.4.47",
     "axios": "^1.11.0",
     "crypto-js": "^4.2.0",
+    "lucide-vue-next": "^1.0.0",
     "pinia": "^3.0.3",
     "sweetalert2": "^11.22.4",
     "vuetify": "^3.9.4"
