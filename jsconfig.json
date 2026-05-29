@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "~/*": ["./*"],
+      "#imports": ["./.nuxt/imports.d.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist", ".nuxt", ".output"]
+}

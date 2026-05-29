@@ -1,0 +1,40 @@
+{
+  "name": "gestion_documental",
+  "version": "1.0.0",
+  "description": "Sistema gestión documental",
+  "author": "SABG",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "generate": "nuxt generate",
+    "postinstall": "nuxt prepare",
+    "format": "prettier --write .",
+    "lint": "eslint . --ext .vue,.js,.ts"
+  },
+  "dependencies": {
+    "@mdi/font": "^7.4.47",
+    "axios": "^1.11.0",
+    "crypto-js": "^4.2.0",
+    "pinia": "^3.0.3",
+    "sweetalert2": "^11.22.4",
+    "vuetify": "^3.9.4"
+  },
+  "devDependencies": {
+    "@pinia/nuxt": "^0.11.3",
+    "nuxt": "^4.3.1",
+    "prettier": "3.6.2",
+    "vuetify-nuxt-module": "^0.19.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "npm:rolldown-vite@latest"
+    }
+  }
+}
