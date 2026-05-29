@@ -39,6 +39,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!authService.isAuthenticated() || !authStore.isAuthenticated) {
     if (import.meta.client) {
       try {
+        sessionStorage.setItem('post_login_redirect', to.fullPath || '/admin')
         await authStore.login()
         return abortNavigation()
       } catch (error) {

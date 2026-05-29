@@ -36,6 +36,7 @@ definePageMeta({
 })
 
 const router = useRouter()
+const postLoginRedirectKey = 'post_login_redirect'
 const isProcessing = ref(true)
 const status = ref({
   icon: 'mdi-loading',
@@ -47,6 +48,24 @@ const status = ref({
   buttonColor: 'primary',
   redirectTo: '/',
 })
+
+function getPostLoginRedirect() {
+  const fallbackRedirect = '/admin'
+  const savedRedirect = sessionStorage.getItem(postLoginRedirectKey)
+
+  sessionStorage.removeItem(postLoginRedirectKey)
+
+  if (
+    savedRedirect &&
+    savedRedirect.startsWith('/') &&
+    !savedRedirect.startsWith('//') &&
+    !savedRedirect.startsWith('/auth/')
+  ) {
+    return savedRedirect
+  }
+
+  return fallbackRedirect
+}
 
 async function processAuthCallback() {
   const authStore = useAuthStore()
@@ -65,6 +84,7 @@ async function processAuthCallback() {
     }
 
     await authStore.handleAuthCallback(code, state)
+    const redirectTo = getPostLoginRedirect()
 
     status.value = {
       icon: 'mdi-check-circle',
@@ -74,11 +94,11 @@ async function processAuthCallback() {
       showButton: false,
       buttonText: 'Aceptar',
       buttonColor: 'success',
-      redirectTo: '/',
+      redirectTo,
     }
 
     setTimeout(() => {
-      router.push('/')
+      router.push(redirectTo)
     }, 10)
   } catch (err) {
     status.value = {

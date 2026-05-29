@@ -1,4 +1,6 @@
 // nuxt.config.ts
+import tailwindcss from '@tailwindcss/vite'
+
 export default defineNuxtConfig({
   // ─── Módulos ───────────────────────────────────────────
   modules: ['@pinia/nuxt', 'vuetify-nuxt-module'],
@@ -82,7 +84,12 @@ export default defineNuxtConfig({
   },
 
   // ─── CSS Global ────────────────────────────────────────
-  css: ['@mdi/font/css/materialdesignicons.css'],
+  css: ['@mdi/font/css/materialdesignicons.css', '~/assets/css/gob-theme.css'],
+
+  // ─── Tailwind CSS ─────────────────────────────────────
+  vite: {
+    plugins: [tailwindcss()],
+  },
 
   // ─── Google Fonts (reemplaza lo que estaba en index.html) ─
   app: {
