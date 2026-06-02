@@ -1,5 +1,6 @@
-import api from "./api"
+import { api, apiUpload } from "./api"
 import type {
+  CargaExcelResponse,
   DetalleEstatalResponse,
   EstatalEditarPayload,
   EstatalRegistro,
@@ -7,28 +8,36 @@ import type {
 } from "~/types/api"
 
 export const estatalService = {
-  async obtenerDetalle(
-    anio: string,
-    sancionid: string,
-  ): Promise<DetalleEstatalResponse> {
-    const { data } = await api.get("/estatal/detalle", {
-      params: { anio, sancionid },
+  obtenerDetalle(anio: string, sancionid: string) {
+    return api<DetalleEstatalResponse>("/estatal/detalle", {
+      query: { anio, sancionid },
     })
-    return data
   },
 
-  async crear(registro: EstatalRegistro): Promise<MensajeResponse> {
-    const { data } = await api.post("/estatal/crear", registro)
-    return data
+  crear(registro: EstatalRegistro) {
+    return api<MensajeResponse>("/estatal/crear", {
+      method: "POST",
+      body: registro,
+    })
   },
 
-  async editar(payload: EstatalEditarPayload): Promise<MensajeResponse> {
-    const { data } = await api.post("/estatal/editar", payload)
-    return data
+  editar(payload: EstatalEditarPayload) {
+    return api<MensajeResponse>("/estatal/editar", {
+      method: "POST",
+      body: payload,
+    })
   },
 
-  async eliminar(anio: string, sancionid: string): Promise<MensajeResponse> {
-    const { data } = await api.post("/estatal/eliminar", { anio, sancionid })
-    return data
+  eliminar(anio: string, sancionid: string) {
+    return api<MensajeResponse>("/estatal/eliminar", {
+      method: "POST",
+      body: { anio, sancionid },
+    })
+  },
+
+  cargarExcel(file: File) {
+    const formData = new FormData()
+    formData.append("file", file)
+    return apiUpload<CargaExcelResponse>("/estatal/cargar-excel", formData)
   },
 }

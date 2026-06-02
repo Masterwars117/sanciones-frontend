@@ -639,6 +639,21 @@ function normalizeCURPInput(value) {
     .replace(/[\s-]/g, "")
 }
 
+function normalizarClaveDependencia(value) {
+  const clave = (value || "").toString().trim()
+  if (!clave) return ""
+  return /^[0-9]+$/.test(clave) ? clave.padStart(3, "0") : clave
+}
+
+function buscarDependenciaPorClave(clave) {
+  const normalizada = normalizarClaveDependencia(clave)
+  if (!normalizada) return null
+
+  return catalogos.dependencias.find(
+    (item) => normalizarClaveDependencia(item.clave) === normalizada
+  ) || null
+}
+
 function validarRFCEstatal(rfc) {
   return /^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$/.test(rfc)
 }
@@ -681,6 +696,8 @@ function ordenarDependencias(lista = []) {
 
 function formatearFechaHora(value) {
   if (!value) return "-"
+  const soloFecha = String(value).match(/^(\d{4})-(\d{2})-(\d{2})(?:T00:00(?::00(?:\.0+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/)
+  if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`
 
   const fecha = new Date(value)
   if (Number.isNaN(fecha.getTime())) return value
@@ -743,7 +760,8 @@ function toggleTipoEntidad(valor) {
 }
 
 function alCambiarDependencia() {
-  const dep = catalogos.dependencias.find((item) => item.clave === form.dependencia)
+  form.dependencia = normalizarClaveDependencia(form.dependencia)
+  const dep = buscarDependenciaPorClave(form.dependencia)
 
   if (!dep) return
 
@@ -751,22 +769,22 @@ function alCambiarDependencia() {
 }
 
 function alCambiarEntidadLabora() {
-  const entidad = catalogos.dependencias.find(
-    (item) => item.clave === form.cve_entidad_labora
-  )
+  form.cve_entidad_labora = normalizarClaveDependencia(form.cve_entidad_labora)
+  const entidad = buscarDependenciaPorClave(form.cve_entidad_labora)
 
   form.entidad_labora = entidad ? entidad.descripcion : ""
 }
 
 function sincronizarDependenciaActual() {
-  const dep = catalogos.dependencias.find((item) => item.clave === form.dependencia)
+  form.dependencia = normalizarClaveDependencia(form.dependencia)
+  form.cve_entidad_labora = normalizarClaveDependencia(form.cve_entidad_labora)
+
+  const dep = buscarDependenciaPorClave(form.dependencia)
   if (dep) {
     tipoEntidadSancionadora.value = String(dep.tipo)
   }
 
-  const entidad = catalogos.dependencias.find(
-    (item) => item.clave === form.cve_entidad_labora
-  )
+  const entidad = buscarDependenciaPorClave(form.cve_entidad_labora)
 
   if (entidad) {
     form.entidad_labora = entidad.descripcion

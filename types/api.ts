@@ -20,6 +20,8 @@ export interface CatalogosEstatal {
 
 export interface PaginatedResponse<T> {
   results: T[]
+  count?: number
+  total_count?: number
   page?: number
   total_pages?: number
   page_size?: number
@@ -166,6 +168,7 @@ export interface ListarSancionadosParams {
   q?: string
   page?: number
   page_size?: number
+  sort?: "reciente" | "antiguo" | "nombre_asc" | "nombre_desc"
 }
 
 export interface BuscarNombreParams {

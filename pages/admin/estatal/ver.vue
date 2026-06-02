@@ -61,7 +61,7 @@
 
               <div class="field">
                 <label>Entidad labora</label>
-                <div class="value-box">{{ mostrar(form.entidad_labora) }}</div>
+                <div class="value-box">{{ descripcionEntidadLabora }}</div>
               </div>
 
               <div class="field">
@@ -395,8 +395,26 @@ function mostrar(valor) {
   return String(valor)
 }
 
+function normalizarClaveDependencia(value) {
+  const clave = (value || "").toString().trim()
+  if (!clave) return ""
+  return /^[0-9]+$/.test(clave) ? clave.padStart(3, "0") : clave
+}
+
+function buscarDependenciaPorClave(clave) {
+  const normalizada = normalizarClaveDependencia(clave)
+  if (!normalizada) return null
+
+  return catalogos.dependencias.find(
+    (item) => normalizarClaveDependencia(item.clave) === normalizada
+  ) || null
+}
+
 function formatearFecha(value) {
   if (!value) return "-"
+  const soloFecha = String(value).match(/^(\d{4})-(\d{2})-(\d{2})(?:T00:00(?::00(?:\.0+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/)
+  if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`
+
   const fecha = new Date(value)
   if (Number.isNaN(fecha.getTime())) return value
 
@@ -408,6 +426,9 @@ function formatearFecha(value) {
 
 function formatearFechaHora(value) {
   if (!value) return "-"
+  const soloFecha = String(value).match(/^(\d{4})-(\d{2})-(\d{2})(?:T00:00(?::00(?:\.0+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/)
+  if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`
+
   const fecha = new Date(value)
   if (Number.isNaN(fecha.getTime())) return value
 
@@ -427,10 +448,15 @@ function buscarDescripcion(lista, clave, campoDescripcion = "descripcion") {
 
 const descripcionDependencia = computed(() => {
   if (!form.dependencia) return "-"
-  const item = catalogos.dependencias.find(
-    (x) => String(x.clave) === String(form.dependencia)
-  )
+  const item = buscarDependenciaPorClave(form.dependencia)
   return item ? `${item.descripcion} - ${item.clave}` : String(form.dependencia)
+})
+
+const descripcionEntidadLabora = computed(() => {
+  const item = buscarDependenciaPorClave(form.cve_entidad_labora)
+  if (item) return `${item.descripcion} - ${item.clave}`
+
+  return mostrar(form.entidad_labora)
 })
 
 const descripcionGenero = computed(() =>
@@ -478,10 +504,7 @@ const descripcionParticular = computed(() =>
 )
 
 const descripcionTipoEntidad = computed(() => {
-  const dep = catalogos.dependencias.find(
-    (item) =>
-      String(item.clave) === String(form.dependencia || form.cve_entidad_labora)
-  )
+  const dep = buscarDependenciaPorClave(form.dependencia || form.cve_entidad_labora)
 
   if (!dep) return "-"
 
