@@ -248,7 +248,12 @@
 
               <div class="field">
                 <label>Fecha registro</label>
-                <div class="value-box">{{ formatearFechaHora(form.fechareg) }}</div>
+                <div class="value-box">{{ formatearFechaRegistro(form.fechareg) }}</div>
+              </div>
+
+              <div class="field">
+                <label>Hora registro</label>
+                <div class="value-box">{{ formatearHoraRegistro(form.fechareg) }}</div>
               </div>
 
               <div class="field">
@@ -412,7 +417,7 @@ function buscarDependenciaPorClave(clave) {
 
 function formatearFecha(value) {
   if (!value) return "-"
-  const soloFecha = String(value).match(/^(\d{4})-(\d{2})-(\d{2})(?:T00:00(?::00(?:\.0+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/)
+  const soloFecha = obtenerFechaSinHora(value)
   if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`
 
   const fecha = new Date(value)
@@ -424,9 +429,13 @@ function formatearFecha(value) {
   return `${dia}/${mes}/${anio}`
 }
 
-function formatearFechaHora(value) {
+function obtenerFechaSinHora(value) {
+  return String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})(?:T00:00(?::00(?:\.0+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/)
+}
+
+function formatearFechaRegistro(value) {
   if (!value) return "-"
-  const soloFecha = String(value).match(/^(\d{4})-(\d{2})-(\d{2})(?:T00:00(?::00(?:\.0+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/)
+  const soloFecha = obtenerFechaSinHora(value)
   if (soloFecha) return `${soloFecha[3]}/${soloFecha[2]}/${soloFecha[1]}`
 
   const fecha = new Date(value)
@@ -435,9 +444,18 @@ function formatearFechaHora(value) {
   const dia = String(fecha.getDate()).padStart(2, "0")
   const mes = String(fecha.getMonth() + 1).padStart(2, "0")
   const anio = fecha.getFullYear()
+  return `${dia}/${mes}/${anio}`
+}
+
+function formatearHoraRegistro(value) {
+  if (!value || obtenerFechaSinHora(value)) return "-"
+
+  const fecha = new Date(value)
+  if (Number.isNaN(fecha.getTime())) return "-"
+
   const horas = String(fecha.getHours()).padStart(2, "0")
   const minutos = String(fecha.getMinutes()).padStart(2, "0")
-  return `${dia}/${mes}/${anio} ${horas}:${minutos}`
+  return `${horas}:${minutos}`
 }
 
 function buscarDescripcion(lista, clave, campoDescripcion = "descripcion") {
