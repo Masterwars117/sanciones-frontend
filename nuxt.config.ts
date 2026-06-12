@@ -32,12 +32,9 @@ export default defineNuxtConfig({
   },
 
   // ─── Proxy de desarrollo (/api → backend real) ─────────
-  nitro: {
-    devProxy: {
-      '/api': {
-        target: process.env.NUXT_API_BACKEND_URL || 'http://localhost:9099/api',
-        changeOrigin: true,
-      },
+  routeRules: {
+    '/api/**': {
+      proxy: `${process.env.NUXT_API_BACKEND_URL}/**`,
     },
   },
 

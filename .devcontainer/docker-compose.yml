@@ -1,6 +1,3 @@
 services:
   nuxt:
-    volumes:
-      - ..:/workspaces/sanciones-frontend:cached
-
     command: sleep infinity

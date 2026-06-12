@@ -2,7 +2,7 @@
   "name": "gestiondocumental-frontend-dev",
   "dockerComposeFile": ["../docker/dev/docker-compose.yml", "docker-compose.yml"],
   "service": "nuxt",
-  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "workspaceFolder": "/app",
   "remoteUser": "node",
   "overrideCommand": false,
   "forwardPorts": [3000],
