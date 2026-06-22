@@ -32,9 +32,11 @@ export default defineNuxtConfig({
   },
 
   // ─── Proxy de desarrollo (/api → backend real) ─────────
+  // NUXT_API_BACKEND_URL debe apuntar al Django accesible desde donde corre Nitro:
+  // host → localhost:8000 | Docker → http://django:8000/api (ver docker/dev/docker-compose.yml)
   routeRules: {
     '/api/**': {
-      proxy: `${process.env.NUXT_API_BACKEND_URL}/**`,
+      proxy: `${process.env.NUXT_API_BACKEND_URL || 'http://localhost:8000/api'}/**`,
     },
   },
 

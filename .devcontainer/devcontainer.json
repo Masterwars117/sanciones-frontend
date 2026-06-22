@@ -6,7 +6,7 @@
   "remoteUser": "node",
   "overrideCommand": false,
   "forwardPorts": [3000],
-  "postCreateCommand": "npm ci || npm install",
+  "postCreateCommand": "sudo rm -rf .nuxt && (npm ci || npm install)",
   "postStartCommand": "npm run dev -- --host 0.0.0.0 --port 3000",
   "postAttachCommand": "sudo ln -sf /vscode/vscode-server/bin/linux-alpine/*/bin/remote-cli/code /usr/local/bin/code 2>/dev/null || true",
   "customizations": {
